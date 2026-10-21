@@ -1,0 +1,169 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Battle Arena V37 | 2–4 Player Co-op + Chat</title><style>
+:root{color-scheme:dark;font-family:system-ui,Arial,sans-serif}*{box-sizing:border-box}body{margin:0;background:#080f22;color:#eef6ff;text-align:center}header{padding:17px 12px 7px}h1{margin:0;color:#ffda75;font-size:clamp(24px,4vw,36px)}p{margin:7px 0;color:#bbcae6}button,input{font:inherit}button{padding:11px 17px;margin:5px;border:1px solid #e9bd58;background:#f4cb66;color:#17223a;border-radius:10px;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.1)}button:disabled{opacity:.4;cursor:default}button.secondary{background:#243855;border-color:#5875a0;color:#e3f2ff}input{padding:12px;background:#121f36;color:white;border:1px solid #5b81aa;border-radius:10px;max-width:160px;text-transform:uppercase;font-weight:750;letter-spacing:2px}#gamewrap{position:relative;width:min(96vw,900px);margin:8px auto}canvas{display:block;width:100%;aspect-ratio:5/3;background:#142337;border:2px solid #588ac0;border-radius:12px;touch-action:none}#modal{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,10,23,.89);border-radius:12px;overflow:auto}#panel{width:min(90%,590px);max-height:96%;overflow:auto;padding:20px;background:#152641;border:1px solid #4c7097;border-radius:17px;box-shadow:0 0 30px #020614}#panel h2{color:#ffdd88;margin:0 0 12px}#panel p{line-height:1.5}#players{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}#players>div{padding:7px 13px;border-radius:9px;background:#182b44}#chatbox{max-width:900px;margin:12px auto 22px;background:#142642;border:1px solid #5873a0;border-radius:12px;padding:12px;text-align:left}#chatlog{height:180px;overflow:auto;display:flex;flex-direction:column;gap:5px;padding:9px;background:#0a172b;border-radius:8px;scrollbar-color:#62789b transparent}#chatlog .msg{padding:4px 7px;overflow-wrap:anywhere;font-size:14px}#chatlog .mine{background:#1c3c56;border-radius:7px}#chatlog .system{color:#a5b8d4;font-style:italic}#chatrow{display:flex;gap:7px;margin-top:9px}#chatinput{max-width:none;flex:1;min-width:0;letter-spacing:normal;text-transform:none;font-weight:normal}#chatsend{margin:0}#onlinebadge{color:#91ffc5;font-weight:700}#adminbar{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:7px;margin:5px auto}#adminpass{max-width:110px}#adminfire{background:#ef657a;border-color:#ffa2b0}#toast{min-height:24px;color:#ffd477;font-weight:bold}.hud{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:6px;font-size:13px}.hud>span{border:1px solid #355474;background:#172942;border-radius:8px;padding:5px 10px}#touch{display:none;align-items:center;justify-content:space-around;gap:12px;margin:auto auto 20px;width:min(96vw,750px);touch-action:none}.pad{display:grid;grid-template-columns:repeat(3,53px);grid-template-rows:repeat(3,53px);gap:3px}.pad button{padding:0;margin:0}.pad .blank{visibility:hidden}.touchActions{display:grid;grid-template-columns:repeat(2,75px);gap:6px}.touchActions button{padding:12px 4px}.help{font-size:12px;margin:6px 12px 18px}.btnline{display:flex;justify-content:center;flex-wrap:wrap}@media(pointer:coarse){#touch{display:flex}#gamewrap{margin-bottom:8px}}@media(max-width:530px){#panel{padding:12px}#gamewrap{width:100%}.hud{font-size:11px}header{padding-top:7px}} </style></head><body><header><h1>⚔️ BATTLE ARENA V37 — 2–4 PLAYER CO-OP + LIVE CHAT</h1><p>2–4 players · V18 progress import · Live room chat · Online player count · Synergy skills.</p></header><div id="players"><div id="p1">🔵 P1 — waiting</div><div id="p2">🟢 P2 — waiting</div><div id="p3">🟡 P3 — waiting</div><div id="p4">🟣 P4 — waiting</div></div><div class="hud"><span id="mode">Offline</span><span id="wave">Wave —</span><span id="coins">🪙 0</span><span id="score">⭐ 0</span><span id="count">Enemies 0</span><span id="energy">⚡ Synergy 0/100</span><span id="onlinebadge">🟢 Players online: —</span><span id="roomcount">Room: 0/4</span></div><section id="save-import" style="max-width:900px;margin:8px auto;padding:13px;border:1px solid #506a90;border-radius:12px;background:#142642;text-align:left">
+<strong>💾 V18 CHARACTER PROGRESS — PER PLAYER</strong>
+<p style="font-size:13px">If this website uses the same Netlify address as V18, click Find My V18 Save. Otherwise, export your V18 save JSON from the old game or Save Recovery page, then choose that file below. Your original save is never overwritten.</p>
+<div class="btnline"><button id="autoprofile" class="secondary">🔎 FIND MY V18 SAVE</button><label style="display:inline-flex;align-items:center;gap:8px">📂 IMPORT V18 JSON <input id="profilefile" type="file" accept=".json,application/json" style="max-width:230px;font-size:12px;letter-spacing:0;text-transform:none"></label><button id="profileclear" class="secondary">PLAY WITHOUT IMPORT</button></div>
+<p id="profileinfo" style="font-size:13px;color:#ffe099">No character imported yet. Your progress is not erased.</p>
+</section><div id="gamewrap"><canvas id="canvas" width="900" height="540"></canvas><div id="modal"><section id="panel"><h2>🌍 Real Online Co-op</h2><p>Create a private room, send the five-character code to your friend, and play together from different computers.</p><div class="btnline"><button id="create">CREATE ROOM</button></div><div class="btnline"><input id="roomcode" maxlength="5" autocomplete="off" placeholder="ROOM CODE"><button id="join">JOIN ROOM</button></div><p id="status">Connecting to the server…</p><button class="secondary" onclick="location.href='/legacy.html'">PLAY ORIGINAL V20 SOLO / LOCAL</button></section></div></div><div class="btnline"><button id="synergyheal" class="secondary">💚 HEAL PULSE (Z) — 50</button><button id="synergydome" class="secondary">🛡️ DOME (X) — 65</button><button id="synergyvolley" class="secondary">🚀 ROCKET STORM (C) — 100</button></div><div style="margin:12px auto;padding:10px;border:2px solid #8c74ef;border-radius:10px;max-width:900px;background:#1e2544;color:white"><b>✨ HERO ULTIMATE — V36</b> <label>Choose: <select id="ultSelect" style="padding:9px;color:#fff;background:#202848"><option value="guardian">🛡️ GUARDIAN — Fortress Slam</option><option value="scout">⚡ SCOUT — Lightning Rush</option><option value="engineer">🛰️ ENGINEER — Orbital Strike</option></select></label> <button id="ultimateButton">✨ ULTIMATE (V)</button> <span id="ultimateStatus">0/100 charge</span><p style="font-size:12px">Earn charge by defeating enemies. Full charge + 24s cooldown. Choose before starting the room.</p></div><div id="toast"></div>
+<section style="max-width:900px;margin:10px auto;padding:12px;border:1px solid #8060dd;border-radius:12px;background:#192641"><b>⚛️ V37 WEAPON FOUNDRY</b> <label>Weapon: <select id="weaponSelect" style="padding:9px;background:#26344f;color:white"><option value="blaster">BLASTER — Fast fire</option><option value="ion">ION CANNON — Heavy plasma</option></select></label><p id="weaponInfo" style="font-size:13px">Permanent mastery is loaded from your V18 save. Buy upgrades using gems in the Original Campaign's Hero Base, then import that save here.</p></section><section id="chatbox"><strong>💬 TEAM CHAT <span style="font-size:12px;color:#aabbd8">(private to your room)</span></strong><div id="chatlog" role="log" aria-live="polite" aria-relevant="additions"><div class="msg system">Create or join a room to chat with your team.</div></div><form id="chatform"><div id="chatrow"><input id="chatinput" maxlength="160" placeholder="Message your teammates…" autocomplete="off" disabled aria-label="Chat message"><button id="chatsend" disabled type="submit">SEND</button></div></form><small style="color:#aabbd8">Press Enter to send · 160 characters max · Messages stay in this room only.</small></section><div id="adminbar"><label for="adminpass">ADMIN:</label><input id="adminpass" type="password" maxlength="24" placeholder="PASSCODE" autocomplete="off"><button id="adminunlock" class="secondary">UNLOCK</button><button id="adminaim" disabled>🎯 AIMBOT OFF (G)</button><button id="adminfire" disabled>🚀 OVERDRIVE (F)</button><span id="adminstate">Locked</span></div>
+<div id="touch"><div class="pad"><span class="blank">.</span><button data-touch="up">▲</button><span class="blank">.</span><button data-touch="left">◀</button><span class="blank">.</span><button data-touch="right">▶</button><span class="blank">.</span><button data-touch="down">▼</button><span class="blank">.</span></div><div class="touchActions"><button data-touch="fire">FIRE</button><button data-touch="dash">DASH</button><button data-touch="shield">SHIELD</button></div></div><p class="help">WASD or arrows: move · Mouse: aim · Hold click or Space: Blaster · Shift: dash · Q: shield · F: admin rocket ring · G: admin aimbot · On mobile use touch buttons. Room codes work across devices on the <b>same deployed server</b>.</p>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('canvas'),cx=canvas.getContext('2d'),panel=$('panel'),modal=$('modal');
+let ws=null,world=null,myId=null,roomCode='',secret='',active=false,reconnecting=false;let lastChatId=0;let v18Profile=null;const keys={up:false,down:false,left:false,right:false},touch={up:false,down:false,left:false,right:false,fire:false,dash:false,shield:false};let firing=false,angle=-Math.PI/2,dashRequested=false,shieldRequested=false,lastFrame=performance.now(),shownNotice='';
+const V18_KEYS=['battleArenaExtendedV6Save_v1','battleArenaHellSave_v1','battleArenaLesson11Save_v1','battleArenaLesson10Save_v1','battleArenaLesson9Save_v1','battleArenaLesson8Save_v1','battleArenaLesson7Save_v1','battleArenaLesson6Save_v1'];
+function locateV18Save(obj){
+  if(!obj||typeof obj!=='object'||Array.isArray(obj))return null;
+  if(obj.saveData&&typeof obj.saveData==='object')return locateV18Save(obj.saveData);
+  if(obj.meta&&typeof obj.meta==='object')return locateV18Save(obj.meta);
+  if(obj.data&&typeof obj.data==='object'&&!obj.upgrades)return locateV18Save(obj.data);
+  if(obj.upgrades&&obj.equipped&&Array.isArray(obj.equipment))return obj;
+  // Export all: localStorage keys as an object, possibly values encoded as JSON strings.
+  for(const k of V18_KEYS){if(k in obj){let v=obj[k];try{if(typeof v==='string')v=JSON.parse(v)}catch{}const found=locateV18Save(v);if(found)return found}}
+  if(obj.saves&&typeof obj.saves==='object')return locateV18Save(obj.saves);
+  if(Array.isArray(obj.entries)){for(const e of obj.entries){const found=locateV18Save(e);if(found)return found}}
+  return null;
+}
+function compactV18(raw){
+  const save=locateV18Save(raw);if(!save)throw Error('Not a recognized V18 campaign save.');
+  const bonus=type=>{const item=(save.equipment||[]).find(e=>e.id===save.equipped?.[type]&&e.type===type);return Number(item?.bonus)||0};
+  const lvl=k=>Math.max(0,Math.min(5,Math.floor(Number(save.upgrades?.[k])||0)));
+  return {name:String(save.profileName||'Adventurer').slice(0,22),bestWave:Math.max(1,Math.floor(Number(save.bestWave)||1)),
+    completed:Array.isArray(save.completedArenas)?save.completedArenas.length:0,
+    upgrades:{health:lvl('health'),speed:lvl('speed'),damage:lvl('damage')},
+    weaponLevels:Object.fromEntries(['pistol','shotgun','blaster','rocket','ion'].map(k=>[k,Math.min(5,Math.max(0,Math.floor(Number(save.weaponLevels?.[k])||0)))])),ionUnlocked:!!save.ionUnlocked,gear:{weapon:bonus('weapon'),armor:bonus('armor'),charm:bonus('charm')}};
+}
+function importProfile(raw,source){
+  try{v18Profile=compactV18(raw);const p=v18Profile;
+    $('profileinfo').textContent=`✅ ${p.name} (${source}) · Best Wave ${p.bestWave} · ${p.completed}/5 missions · Permanent upgrades H${p.upgrades.health}/S${p.upgrades.speed}/D${p.upgrades.damage} · Gear W${p.gear.weapon}/A${p.gear.armor}/F${p.gear.charm}. Co-op bonuses capped for fair bosses.`;
+    if(active)transmit({type:'profile',profile:v18Profile});$('weaponInfo').textContent='Imported mastery: Blaster '+(p.weaponLevels?.blaster||0)+'/5 · Ion '+(p.weaponLevels?.ion||0)+'/5. Your V18 original save remains unchanged.';
+    return true;
+  }catch(e){$('profileinfo').textContent='⚠️ '+e.message;return false;}
+}
+$('autoprofile').onclick=()=>{let found=false;for(const k of V18_KEYS){try{const raw=localStorage.getItem(k);if(raw&&importProfile(JSON.parse(raw),`browser: ${k}`)){found=true;break}}catch{}}if(!found)$('profileinfo').textContent='No V18 save at this website address. Import an exported V18 JSON backup instead.'};
+$('profilefile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>2e6){$('profileinfo').textContent='File too large (limit 2 MB).';return}try{importProfile(JSON.parse(await f.text()),f.name)}catch{$('profileinfo').textContent='Invalid JSON file.'}};
+$('profileclear').onclick=()=>{v18Profile=null;$('profileinfo').textContent='Guest selected. V18 browser save remains unchanged.';if(active)transmit({type:'profile',profile:{name:'Guest',upgrades:{},gear:{}}})};
+function status(s){$('status').textContent=s}function toast(s){$('toast').textContent=s;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').textContent='',2500)}
+function button(label,fn,klass=''){const e=document.createElement('button');e.textContent=label;e.className=klass;e.onclick=fn;return e}
+function resetPanel(title,desc){modal.style.display='flex';panel.replaceChildren();const h=document.createElement('h2');h.textContent=title;const p=document.createElement('p');p.textContent=desc;panel.append(h,p)}
+function transmit(payload){if(ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify(payload))}
+function connect(rejoin=false){if(ws&&ws.readyState===WebSocket.OPEN)return;ws=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}`);status('Connecting…');ws.onopen=()=>{status('Connected to game server');if(rejoin&&roomCode&&secret)transmit({type:'join',code:roomCode,token:secret})};ws.onerror=()=>status('Connection error');ws.onclose=()=>{active=false;$('chatinput').disabled=true;$('chatsend').disabled=true;resetPanel('🔌 Connection lost','Attempting to reconnect to the game server. Your room is preserved temporarily.');panel.append(button('RECONNECT NOW',()=>{if(ws)try{ws.close()}catch{}connect(true)}));setTimeout(()=>{if(ws.readyState!==WebSocket.OPEN)connect(true)},2000)};ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}handle(m)}}
+function addChat(m){if(!m||typeof m.text!=='string'||m.id<=lastChatId)return;lastChatId=m.id;const log=$('chatlog');const el=document.createElement('div');el.className='msg'+(m.playerId===myId?' mine':'');const name=document.createElement('strong');name.textContent=(m.name||`Player ${Number(m.playerId)+1}`)+': ';const msg=document.createElement('span');msg.textContent=m.text;el.append(name,msg);const nearBottom=log.scrollHeight-log.clientHeight-log.scrollTop<70;log.append(el);while(log.children.length>50)log.firstElementChild.remove();if(nearBottom)log.scrollTop=log.scrollHeight}
+function handle(m){if(m.type==='presence'){$('onlinebadge').textContent=`🟢 Players online: ${m.onlinePlayers}`;if(!world)$('roomcount').textContent=`Active rooms: ${m.activeRooms}`;return}if(m.type==='chat_history'){lastChatId=0;$('chatlog').replaceChildren();for(const entry of m.messages||[])addChat(entry);return}if(m.type==='chat'){addChat(m.message);return}if(m.type==='error'){toast(m.message);status(m.message);return}if(m.type==='toast'){toast(m.text);return}if(m.type==='admin'){toast('ADMIN OVERDRIVE UNLOCKED!');$('adminpass').value='';return}if(m.type==='joined'){myId=m.id;roomCode=m.room;secret=m.token;try{sessionStorage.setItem('ba-online-session',JSON.stringify({roomCode,secret}))}catch{}active=true;$('chatinput').disabled=false;$('chatsend').disabled=false;if(v18Profile)transmit({type:'profile',profile:v18Profile});showLobby();transmit({type:'ultimate_select',kind:$('ultSelect').value});transmit({type:'weapon_select',weapon:$('weaponSelect').value});return}if(m.type==='state'){world=m;updateHud();if(m.notice&&m.notice!==shownNotice){shownNotice=m.notice;toast(m.notice)}if(m.phase==='lobby'){if(panel.dataset.phase!=='lobby')showLobby();else updateLobby()}else if(m.phase==='combat'){modal.style.display='none';panel.dataset.phase='combat'}else if(m.phase==='shop'){if(panel.dataset.phase!=='shop')showShop();else updateShop()}else if(m.phase==='won'||m.phase==='lost'){if(panel.dataset.phase!==m.phase)showEnd(m.phase)} }}
+function updateHud(){if(!world)return;$('mode').textContent=`ROOM ${roomCode} | ${world.phase.toUpperCase()}`;$('wave').textContent=`Wave ${world.wave} / 6 — Squad ${world.stage}/4`;$('coins').textContent=`🪙 ${world.coins}`;$('score').textContent=`⭐ ${world.score}`;$('count').textContent=`Enemies ${world.enemies.length}`;const me=world.players[myId];$('ultimateStatus').textContent=me?`${Math.round(me.ultCharge||0)}/100 · ${(me.ultimate||'guardian').toUpperCase()}${me.ultCooldown>0?' · '+me.ultCooldown.toFixed(1)+'s':''}`:'0/100 charge';$('ultimateButton').disabled=!(me?.alive&&world.phase==='combat'&&me.ultCharge>=100&&me.ultCooldown<=0);$('ultSelect').disabled=world.phase!=='lobby';$('adminaim').disabled=!me?.admin;$('adminaim').textContent=me?.adminAim?'🎯 AIMBOT ON (G)':'🎯 AIMBOT OFF (G)';$('adminfire').disabled=!(me?.admin&&me?.alive&&me.adminCooldown<=0&&world.phase==='combat');$('adminstate').textContent=me?.admin?(me.adminCooldown>0?`Recharge ${me.adminCooldown.toFixed(1)}s`:'🚀 READY'):'Locked';$('onlinebadge').textContent=`🟢 Players online: ${world.onlinePlayers??'—'}`;$('roomcount').textContent=`Room: ${world.roomConnected??0}/4 · Active rooms: ${world.activeRooms??0}`;$('energy').textContent=`⚡ Synergy ${Math.floor(world.teamEnergy||0)}/100`;for(let i=0;i<4;i++){const p=world.players[i];$(`p${i+1}`).textContent=p?`${['🔵','🟢','🟡','🟣'][i]} ${p.name||'P'+(i+1)} ${p.connected?'●':'○'} HP ${Math.ceil(p.hp)}/${p.maxHp} · Blaster +${p.upgrades*2} · BOOST ×${p.boosts}`:`${['🔵','🟢','🟡','🟣'][i]} P${i+1} — waiting`;}}
+function showLobby(){resetPanel(`ROOM ${roomCode}`,'Share this code with your friend. Each player opens the same website on their own computer.');panel.dataset.phase='lobby';const copy=button('📋 COPY ROOM CODE',()=>{navigator.clipboard?.writeText(roomCode).then(()=>toast('Room code copied')).catch(()=>toast(roomCode))});panel.append(copy);const msg=document.createElement('p');msg.id='lobbystatus';panel.append(msg);if(myId===0)panel.append(button('▶ START ONLINE CO-OP',()=>{toast('Starting battle…');transmit({type:'start'})}));else {const t=document.createElement('p');t.textContent='Waiting for Player 1 to start…';panel.append(t)}updateLobby()}
+function updateLobby(){const p=world?.players||[];const connected=p.filter(q=>q?.connected).length;const joined=p.filter(Boolean).length;const both=connected>=2&&connected===joined;const t=$('lobbystatus');if(t)t.textContent=both?`✅ ${connected} players connected. Ready to fight!`:`⏳ ${connected}/4 connected · Need 2+ players to start · Profiles: ${p.filter(q=>q?.profile).length}/${joined} imported`;const b=[...panel.querySelectorAll('button')].find(e=>e.textContent.includes('START ONLINE'));if(b)b.disabled=!both}
+function showShop(){resetPanel(`WAVE ${world.wave} CLEARED!`,'Each player can buy upgrades using shared coins. All connected teammates must click READY to continue.');panel.dataset.phase='shop';const choices=[['⚡ UPGRADE BLASTER','damage'],['❤️ HEAL +40 HP','heal'],['🔥 8-SECOND DAMAGE BOOST','boost']];for(const [label,id] of choices)panel.append(button(label,()=>transmit({type:'buy',item:id}),'secondary'));const ready=button('✅ READY FOR NEXT WAVE',()=>transmit({type:'ready'}));ready.id='ready';panel.append(ready);const txt=document.createElement('p');txt.id='shopInfo';panel.append(txt);updateShop()}
+function updateShop(){if(!world)return;const p=world.players[myId];$('shopInfo').textContent=`Team coins: ${world.coins} · Upgrade cost: ${30+(p?.upgrades||0)*18} · Heal: 25 · Boost: 24 · Ready: ${world.ready.filter(Boolean).length}/${world.players.filter(Boolean).length}`;$('ready').disabled=!!world.ready[myId]}
+function showEnd(result){resetPanel(result==='won'?'🏆 THE CROWN GAUNTLET IS YOURS!':'💀 ALL HEROES HAVE FALLEN',`Score: ${world.score.toLocaleString()} · Wave: ${world.wave} · Time: ${Math.floor(world.elapsed/60)}:${String(world.elapsed%60).padStart(2,'0')}`);panel.dataset.phase=result;if(myId===0)panel.append(button('RESTART THE GAUNTLET',()=>transmit({type:'restart'})));else panel.append(document.createTextNode('Waiting for host to restart.'))}
+$('chatform').addEventListener('submit',e=>{e.preventDefault();const t=$('chatinput').value.trim();if(!t||!active)return;transmit({type:'chat',text:t.slice(0,160)});$('chatinput').value='';$('chatinput').focus()});$('create').onclick=()=>transmit({type:'create'});$('join').onclick=()=>transmit({type:'join',code:$('roomcode').value.trim()});
+function keyAction(k,down,repeat=false){const key=k.toLowerCase();const map={w:'up',arrowup:'up',s:'down',arrowdown:'down',a:'left',arrowleft:'left',d:'right',arrowright:'right'};if(map[key])keys[map[key]]=down;if(key===' '){firing=down}if(down&&key==='shift')dashRequested=true;if(down&&key==='q')shieldRequested=true;if(down&&key==='f'&&!repeat)transmit({type:'admin_fire'});if(down&&key==='v'&&!repeat)transmit({type:'ultimate'});if(down&&key==='g'&&!repeat)transmit({type:'admin_aim_toggle'});if(down&&key==='z'&&!repeat)transmit({type:'synergy',kind:'heal'});if(down&&key==='x'&&!repeat)transmit({type:'synergy',kind:'dome'});if(down&&key==='c'&&!repeat)transmit({type:'synergy',kind:'volley'});}
+window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keyAction(e.key,true,e.repeat)});window.addEventListener('keyup',e=>keyAction(e.key,false));window.addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;firing=false});
+$('weaponSelect').onchange=()=>transmit({type:'weapon_select',weapon:$('weaponSelect').value});$('ultimateButton').onclick=()=>transmit({type:'ultimate'});$('ultSelect').onchange=()=>transmit({type:'ultimate_select',kind:$('ultSelect').value});$('synergyheal').onclick=()=>transmit({type:'synergy',kind:'heal'});$('synergydome').onclick=()=>transmit({type:'synergy',kind:'dome'});$('synergyvolley').onclick=()=>transmit({type:'synergy',kind:'volley'});$('adminunlock').onclick=()=>transmit({type:'admin_unlock',passcode:$('adminpass').value.trim()});$('adminfire').onclick=()=>transmit({type:'admin_fire'});$('adminaim').onclick=()=>transmit({type:'admin_aim_toggle'});$('adminpass').addEventListener('keydown',e=>{if(e.key==='Enter')$('adminunlock').click()});function aim(e){const rect=canvas.getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width*900,y=(e.clientY-rect.top)/rect.height*540;const p=world?.players[myId];if(p)angle=Math.atan2(y-p.y,x-p.x)}canvas.addEventListener('pointermove',aim);canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){aim(e);firing=true}});window.addEventListener('pointerup',()=>firing=false);canvas.addEventListener('contextmenu',e=>e.preventDefault());
+for(const b of document.querySelectorAll('[data-touch]')){const a=b.dataset.touch;b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);touch[a]=true});for(const ev of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(ev,e=>{touch[a]=false})}
+setInterval(()=>{if(!active||!world||world.phase!=='combat')return;const p=world.players[myId];if(!p)return;const k={};for(const name of ['up','down','left','right'])k[name]=keys[name]||touch[name];let a=angle;if(touch.fire){const e=world.enemies.reduce((best,cur)=>{const d=Math.hypot(cur.x-p.x,cur.y-p.y);return !best||d<best.d?{d,e:cur}:best},null);if(e)a=Math.atan2(e.e.y-p.y,e.e.x-p.x)}transmit({type:'input',keys:k,fire:firing||touch.fire,angle:a,dash:dashRequested||touch.dash,shield:shieldRequested||touch.shield});dashRequested=false;shieldRequested=false;},33);
+function draw(t){requestAnimationFrame(draw);const dt=Math.min((t-lastFrame)/1000,.05);lastFrame=t;cx.fillStyle='#142337';cx.fillRect(0,0,900,540);cx.save();cx.globalAlpha=.22;v42OnlineImg('arena0',0,0,900,540);cx.restore();cx.strokeStyle='#25435b';cx.lineWidth=1;for(let x=0;x<900;x+=45){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,540);cx.stroke()}for(let y=0;y<540;y+=45){cx.beginPath();cx.moveTo(0,y);cx.lineTo(900,y);cx.stroke()}if(!world)return;if(world.teamDome>0){cx.beginPath();cx.arc(world.teamDomeX,world.teamDomeY,140,0,Math.PI*2);cx.fillStyle='rgba(104,205,255,.10)';cx.fill();cx.strokeStyle='#8ee9ff';cx.lineWidth=4;cx.stroke()}
+  for(const l of world.loot){cx.beginPath();cx.arc(l.x,l.y,9+Math.sin(t/190)*1.3,0,Math.PI*2);cx.fillStyle=l.type==='heal'?'#76f1a3':'#ffd570';cx.fill()}
+  for(const b of world.bullets){cx.beginPath();cx.arc(b.x,b.y,b.rocket?9:b.friendly?4:6,0,Math.PI*2);cx.fillStyle=b.rocket?'#ff8b3d':b.ion?'#b69aff':b.friendly?'#ffd75b':'#ff647c';cx.fill()}
+  for(const e of world.enemies)v38ClientEnemy(e);
+  for(const p of world.players)v38ClientPlayer(p);
+  for(const f of world.fx){cx.beginPath();cx.arc(f.x,f.y,f.r+(1-f.life)*30,0,2*Math.PI);cx.strokeStyle='rgba(255,199,94,.65)';cx.lineWidth=3;cx.stroke()}
+  if(world.notice&&world.phase==='combat'){cx.fillStyle='rgba(6,10,19,.48)';cx.fillRect(170,8,560,42);cx.textAlign='center';cx.fillStyle='#ffde91';cx.font='bold 23px system-ui';cx.fillText(world.notice,450,37)}
+}
+
+// V42 online: image sprites are visual only; all server-controlled combat is untouched.
+function v38ClientEnemy(e){cx.fillStyle='#be6072';cx.beginPath();cx.arc(e.x,e.y,e.r,0,Math.PI*2);cx.fill();}
+function v38ClientPlayer(p){cx.fillStyle='#65b9ff';cx.beginPath();cx.arc(p.x,p.y,17,0,Math.PI*2);cx.fill();}
+const v42OnlineImgs={};
+for(const n of ['hero0','hero1','hero2','hero3','enemy0','enemy1','enemy2','enemy3','boss0','boss1','arena0']){let im=new Image();im.src='assets/'+n+(n.startsWith('arena')?'.jpg':'.png');v42OnlineImgs[n]=im;}
+function v42OnlineImg(n,x,y,w,h){const im=v42OnlineImgs[n];if(!im||!im.complete||!im.naturalWidth)return false;cx.drawImage(im,x,y,w,h);return true;}
+const v42EnemyOldOnline=v38ClientEnemy;
+v38ClientEnemy=function(e){let pick={grunt:0,runner:3,sniper:1,brute:2,boss:0}[e.type]??0;
+ const n=e.type==='boss'?'boss'+(e.bossPhase>1?1:0):'enemy'+pick;let w=e.type==='boss'?Math.max(75,e.r*2.5):Math.max(32,e.r*2.4);let h=e.type==='boss'?Math.max(85,e.r*2.5):Math.max(42,e.r*2.7);
+ if(!v42OnlineImg(n,e.x-w/2,e.y-h*.6,w,h)){v42EnemyOldOnline(e);return;}
+ cx.fillStyle='#10182b';cx.fillRect(e.x-e.r,e.y-e.r-15,e.r*2,6);cx.fillStyle='#70eda1';cx.fillRect(e.x-e.r,e.y-e.r-15,e.r*2*Math.max(0,e.hp)/Math.max(1,e.maxHp),6);
+};
+const v42PlayerOldOnline=v38ClientPlayer;
+v38ClientPlayer=function(p){if(!p)return;let w=42,h=55;
+ if(!v42OnlineImg('hero'+(Math.abs(p.id||0)%4),p.x-w/2,p.y-h*.62,w,h)){v42PlayerOldOnline(p);return;}
+ cx.save();cx.strokeStyle=p.shield?'#ffdd8f':'#79e4ff';cx.lineWidth=p.shield?4:2;cx.beginPath();cx.arc(p.x,p.y,22,0,Math.PI*2);cx.stroke();cx.strokeStyle='#ffe48f';cx.lineWidth=6;cx.beginPath();cx.moveTo(p.x,p.y);cx.lineTo(p.x+Math.cos(p.angle||0)*35,p.y+Math.sin(p.angle||0)*35);cx.stroke();cx.restore();
+ cx.textAlign='center';cx.font='bold 13px system-ui';cx.fillStyle='#fff';cx.fillText('P'+(p.id+1)+(p.alive?'':' DOWN'),p.x,p.y-33);
+};
+
+
+
+// V43 FRAME-BY-FRAME ANIMATION: all actor sprites use actual distinct poses,
+// with idle (0-1), four run frames (2-5), firing (6) and hit reactions (7).
+const v43Sheets={};
+for(const kind of ['hero','enemy','boss']){
+ const count=kind==='boss'?2:4;
+ for(let i=0;i<count;i++){
+  const im=new Image();im.src='assets/'+kind+'_sheet_'+i+'.png';v43Sheets[kind+i]=im;
+ }
+}
+const v43Track=new WeakMap();
+function v43TrackPose(obj,clock){
+ let st=v43Track.get(obj);
+ if(!st){st={x:obj.x,y:obj.y,hp:obj.hp,at:clock,lastMove:clock,lastHit:-1e6,lastFire:-1e6,dir:2};v43Track.set(obj,st);}
+ const dt=clock-st.at,dx=obj.x-st.x,dy=obj.y-st.y;
+ if(dt>=.03){
+  if(Math.hypot(dx,dy)>.7){st.lastMove=clock;st.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0);}
+  if(Number.isFinite(obj.hp)&&Number.isFinite(st.hp)&&obj.hp<st.hp)st.lastHit=clock;
+  st.hp=obj.hp;st.x=obj.x;st.y=obj.y;st.at=clock;
+ }
+ return st;
+}
+function v43Direction(angle){const x=Math.cos(angle),y=Math.sin(angle);return Math.abs(x)>Math.abs(y)?(x>0?1:3):(y>0?2:0);}
+function v43Draw(c,kind,index,obj,angle,w,h,clock,fire,hit){
+ const img=v43Sheets[kind+index];if(!img||!img.complete||!img.naturalWidth)return false;
+ const st=v43TrackPose(obj,clock);
+ const walking=clock-st.lastMove<.16;
+ if(Number.isFinite(angle))st.dir=v43Direction(angle);
+ let frame=walking?2+(Math.floor(clock*11+(index*.4))%4):Math.floor(clock*2+index)%2;
+ if(fire || clock-st.lastFire<.11)frame=6;
+ if(hit || clock-st.lastHit<.25)frame=7;
+ const fade=obj.alive===false?.38:1;
+ c.save();c.globalAlpha*=fade;
+ c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.ellipse(obj.x,obj.y+16,w*.32,h*.055,0,0,Math.PI*2);c.fill();
+ c.imageSmoothingEnabled=false;
+ c.drawImage(img,frame*80,st.dir*96,80,96,obj.x-w/2,obj.y-h*.67,w,h);
+ c.restore();return true;
+}
+
+const v43OnlineTrack=new Map();
+function v43DrawNet(kind,index,o,w,h,clock,fire){
+ const img=v43Sheets[kind+index];if(!img||!img.complete||!img.naturalWidth)return false;
+ const key=kind+':'+o.id;
+ let st=v43OnlineTrack.get(key);
+ if(!st){st={x:o.x,y:o.y,hp:o.hp,at:clock,lastMove:clock,lastHit:-1e6,lastFire:-1e6,dir:2};v43OnlineTrack.set(key,st);}
+ const dt=clock-st.at,dx=o.x-st.x,dy=o.y-st.y;
+ if(dt>.025){
+  if(Math.hypot(dx,dy)>.75){st.lastMove=clock;st.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0);}
+  if(Number.isFinite(o.hp)&&Number.isFinite(st.hp)&&o.hp<st.hp)st.lastHit=clock;
+  st.hp=o.hp;st.x=o.x;st.y=o.y;st.at=clock;
+ }
+ if(kind==='hero'&&Number.isFinite(o.angle))st.dir=v43Direction(o.angle);
+ const walking=clock-st.lastMove<.22;
+ let frame=walking?2+(Math.floor(clock*11)%4):Math.floor(clock*2+index)%2;
+ if(fire)frame=6;
+ if(clock-st.lastHit<.25)frame=7;
+ cx.save();cx.globalAlpha=o.alive===false?.3:1;cx.fillStyle='rgba(0,0,0,.28)';cx.beginPath();cx.ellipse(o.x,o.y+17,w*.3,4,0,0,Math.PI*2);cx.fill();cx.imageSmoothingEnabled=false;
+ cx.drawImage(img,frame*80,st.dir*96,80,96,o.x-w/2,o.y-h*.67,w,h);cx.restore();return true;
+}
+const v43OldNetPlayer=v38ClientPlayer,v43OldNetEnemy=v38ClientEnemy;
+v38ClientPlayer=function(p){if(!p)return;
+ const clock=performance.now()/1000;
+ const firing=!!(world&&world.bullets&&world.bullets.some(b=>b.friendly&&b.owner===p.id&&Math.hypot(b.x-p.x,b.y-p.y)<95));
+ if(!v43DrawNet('hero',Math.abs(p.id)%4,p,58,76,clock,firing)){v43OldNetPlayer(p);return;}
+ cx.save();if(p.shield){cx.strokeStyle='#bdfcff';cx.lineWidth=3;cx.beginPath();cx.arc(p.x,p.y,24,0,Math.PI*2);cx.stroke();}cx.textAlign='center';cx.fillStyle='#fff';cx.font='bold 13px system-ui';cx.fillText((p.name||('P'+(p.id+1)))+(p.alive?'':' DOWN'),p.x,p.y-52);cx.restore();
+};
+v38ClientEnemy=function(e){
+ const kind=e.type||'grunt',idx=({grunt:0,runner:3,sniper:1,brute:2,boss:0}[kind]||0);
+ if(!v43DrawNet(kind==='boss'?'boss':'enemy',kind==='boss'&&e.bossPhase>1?1:idx,e,kind==='boss'?110:Math.max(50,e.r*2.4),kind==='boss'?130:Math.max(60,e.r*3.15),performance.now()/1000,kind==='boss'&&e.charge>.75)){v43OldNetEnemy(e);return;}
+ cx.fillStyle='#192333';cx.fillRect(e.x-e.r,e.y-e.r-23,e.r*2,6);cx.fillStyle='#71e5a0';cx.fillRect(e.x-e.r,e.y-e.r-23,e.r*2*Math.max(0,e.hp)/Math.max(1,e.maxHp),6);
+ if(kind==='boss'){cx.fillStyle='#ffdfa3';cx.font='bold 13px system-ui';cx.textAlign='center';cx.fillText((world.bossName||'BOSS')+' · PHASE '+(e.bossPhase||1),e.x,e.y-e.r-27);}
+};
+
+requestAnimationFrame(draw);connect();
+const saved=(()=>{try{return JSON.parse(sessionStorage.getItem('ba-online-session'))}catch{return null}})();if(saved?.roomCode&&saved?.secret){roomCode=saved.roomCode;secret=saved.secret;ws.addEventListener('open',()=>transmit({type:'join',code:roomCode,token:secret}),{once:true})}
+</script></body></html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Battle Arena V38 — Save Recovery & Export</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#293d59,#0b1223 75%);color:#eef5ff;font:16px system-ui,Arial,sans-serif;padding:24px}main{max-width:950px;margin:auto}h1{color:#ffe098;margin-bottom:8px}p,small{color:#bfd0e8;line-height:1.55}a{color:#a7dcff}.notice{padding:14px 18px;border-radius:12px;background:#283c50;border:1px solid #7891ad}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}button,.btn{cursor:pointer;border:1px solid #9db5dc;color:#0b1c30;background:#f0ce77;font:700 14px system-ui;padding:11px 15px;border-radius:9px;text-decoration:none}button:hover,.btn:hover{filter:brightness(1.08)}button.subtle{background:#344e70;color:white}.item{padding:16px;border:1px solid #587294;border-radius:14px;background:#1a2c46;margin:13px 0}.item h3{margin:0 0 6px}.pill{display:inline-block;padding:3px 8px;background:#365475;border-radius:6px;font-size:12px}.metrics{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;color:#cfe8ff}.metrics span{background:#304967;padding:8px 10px;border-radius:7px}#status{font-size:14px;min-height:22px;color:#b9f0d9}.danger{color:#ffd2cd}footer{margin:26px 0;color:#abb9cb;font-size:14px}
+</style></head><body><main>
+<a href="menu.html">← Back to Battle Arena V38</a>
+<h1>💾 Save Recovery & Export</h1>
+<p>Recover your progression from earlier Battle Arena V38 versions, or export it to a JSON backup file. This page reads saves stored in <b>this browser on this exact website</b>. It cannot access other computers, browsers, or website addresses.</p>
+<div class="notice"><b>Safe by default:</b> simply viewing or exporting never changes your game. Restoring asks for confirmation and first downloads a backup of the current save. Your leaderboard and settings are preserved separately.</div>
+<div class="actions"><button id="refresh">🔍 Find saved games</button><button id="exportAll">📦 Export all Battle Arena V38 data</button><a href="classic.html" class="btn">▶ Play Original</a></div>
+<div id="status" role="status"></div><div id="entries"></div>
+<h2>Restore a JSON backup</h2><p>If you previously used the in-game <b>EXPORT SAVE</b> button, you can restore that file here. Your current game data will be backed up before any replacement.</p>
+<input id="file" type="file" accept=".json,application/json"><button class="subtle" id="import">Import selected file</button>
+<footer><b>Note:</b> if you originally played a downloaded <code>file://</code> HTML file or on a different Netlify domain, its progress may not be visible here. Open that original page in the same browser and use its Export Save button, then import the resulting file here.</footer>
+</main><script>
+'use strict';
+const MAIN_KEY='battleArenaExtendedV6Save_v1';
+const knownKeys=[MAIN_KEY,'battleArenaHellSave_v1','battleArenaLesson12Save_v1','battleArenaLesson11Save_v1','battleArenaLesson10Save_v1','battleArenaLesson9Save_v1','battleArenaLesson8Save_v1','battleArenaLesson7Save_v1','battleArenaLesson6Save_v1'];
+const $=id=>document.getElementById(id);
+function status(s){$('status').textContent=s}
+function safeParse(s){try{return JSON.parse(s)}catch{return null}}
+function knownSaves(){const keys=new Set(knownKeys);for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^battleArena/i.test(k)&&(/save/i.test(k))&&!/prefs|audio|difficulty/i.test(k))keys.add(k)}return [...keys].map(key=>({key,raw:localStorage.getItem(key)})).filter(e=>e.raw!==null).map(e=>({...e,data:safeParse(e.raw)}))}
+function download(name, data){const blob=new Blob([typeof data==='string'?data:JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+function recordOK(x){return x&&typeof x==='object'&&!Array.isArray(x)&&('gems'in x||'upgrades'in x||'completedArenas'in x||'totalKills'in x||'equipment'in x)}
+function metric(label,value){const s=document.createElement('span');s.textContent=label+': '+value;return s}
+function display(){const entries=$('entries');entries.replaceChildren();let found=0;for(const {key,data,raw} of knownSaves()){
+  if(!recordOK(data))continue;found++;
+  const box=document.createElement('section');box.className='item';const heading=document.createElement('h3');heading.textContent=(key===MAIN_KEY?'⭐ Current compatible save':'Older save')+' — '+key;box.appendChild(heading);
+  const tag=document.createElement('span');tag.className='pill';tag.textContent='Player: '+String(data.profileName||'Adventurer').slice(0,60);box.appendChild(tag);
+  const m=document.createElement('div');m.className='metrics';m.append(metric('Gems',Number(data.gems)||0),metric('Kills',Number(data.totalKills)||0),metric('Best wave',Number(data.bestWave)||0),metric('Completed missions',Array.isArray(data.completedArenas)?data.completedArenas.length:0),metric('Gear',Array.isArray(data.equipment)?data.equipment.length:0));box.appendChild(m);
+  const exp=document.createElement('button');exp.textContent='⬇ Export this save';exp.onclick=()=>download('battle-arena-'+key+'.json',raw);box.appendChild(exp);
+  if(key!==MAIN_KEY){const restore=document.createElement('button');restore.className='subtle';restore.style.marginLeft='8px';restore.textContent='Restore as current save';restore.onclick=()=>restoreData(data);box.appendChild(restore)}
+  entries.appendChild(box)
+ }
+ if(!found){const p=document.createElement('p');p.className='notice';p.textContent='No campaign saves found on this website in this browser. If you have not played here yet, open your earlier game/site and export from there, or import an existing backup below.';entries.appendChild(p)}
+ status(found?`Found ${found} compatible saved game${found===1?'':'s'}. Export whichever you want to keep!`:'No compatible game saves found here.')
+}
+function restoreData(raw){if(!recordOK(raw)||!raw.upgrades||!Array.isArray(raw.equipment)){status('This backup does not have the equipment and upgrade data required by this game. Nothing was changed.');return}
+ if(!confirm('Replace the CURRENT Battle Arena V38 campaign save with this backup? We will download a backup of your current save first.'))return;
+ const previous=localStorage.getItem(MAIN_KEY);if(previous!==null)download('battle-arena-before-restore.json',previous);
+ try{localStorage.setItem(MAIN_KEY,JSON.stringify(raw));status('Restore complete. Reload the Original Campaign to see your progress.');display()}catch(err){status('Restore failed: browser storage unavailable or full.')}
+}
+$('refresh').onclick=display;
+$('exportAll').onclick=()=>{const data={format:'battle-arena-backup-bundle-v1',exportedAt:new Date().toISOString(),data:{}};for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key&&/^battleArena/i.test(key))data.data[key]=localStorage.getItem(key)}download('battle-arena-all-data-backup.json',data);status('Downloaded a backup of Battle Arena V38 saves, leaderboard, and preferences.')};
+$('import').onclick=async()=>{const f=$('file').files?.[0];if(!f){status('Select a JSON backup file first.');return}try{const obj=JSON.parse(await f.text());if(obj?.format==='battle-arena-backup-bundle-v1'&&obj.data&&typeof obj.data==='object'){
+const count=Object.keys(obj.data).length;if(!confirm('Import '+count+' saved Battle Arena V38 entries? Existing entries with the same keys will be replaced.'))return;
+const backup={};for(const key of Object.keys(obj.data)){if(!/^battleArena/i.test(key))continue;backup[key]=localStorage.getItem(key)}download('battle-arena-before-bundle-import.json',backup);for(const [key,value]of Object.entries(obj.data)){if(/^battleArena/i.test(key)&&typeof value==='string')localStorage.setItem(key,value)}status('Bundle imported. Reload the game.');display();return}
+restoreData(obj)}catch(e){status('Could not read or import this backup: '+e.message)}};
+try{display()}catch(e){status('Browser storage access is blocked. Check your privacy settings and that this page is on the same website as the old game.')}
+</script></body></html>

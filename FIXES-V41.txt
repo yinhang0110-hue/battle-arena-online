@@ -1,0 +1,12 @@
+Battle Arena V41 — Weapon and Admin Fix (Render all-modes edition)
+
+Original Campaign and Local Co-op:
+- Ion Cannon is usable immediately with key 5 and persists across runs.
+- Rocket Launcher is usable immediately with key 4, now damage 24, 0.48s interval, 640 projectile speed and 120px splash with 2.6x explosion multiplier.
+- Ion Cannon damage 16, 0.35s interval, 690 projectile speed and 90px plasma splash.
+- Admin passcode is no longer displayed in panel headings; existing passcode ADEP still works. The field is case-insensitive.
+- V18 save keys, permanent mastery, music, and multiplayer server code are unchanged.
+
+Publish: extract ZIP and upload files at the root of your GitHub battle-arena-online repository. Commit to main and wait for Render Live.
+IMPORTANT: Back up your save before moving between hostnames.
+This is a source-code patch; live multiplayer/browser regression testing remains necessary.

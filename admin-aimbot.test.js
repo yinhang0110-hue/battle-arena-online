@@ -1,0 +1,6 @@
+const test=require('node:test');const assert=require('node:assert/strict');const Module=require('node:module');const EventEmitter=require('node:events');class MockWSS extends EventEmitter{constructor(){super();this.clients=new Set()}close(){}}const load=Module._load;Module._load=function(id,...args){if(id==='ws')return {WebSocketServer:MockWSS,WebSocket:{OPEN:1}};return load.call(this,id,...args)};const {v35Target,v35Steer,firePlayer,player,stop}=require('../server');Module._load=load;
+test('boss priority, then nearest living enemy',()=>{const r={enemies:[{x:10,y:0,hp:4,type:'grunt'},{x:100,y:0,hp:20,type:'boss'},{x:4,y:0,hp:0,type:'grunt'}]};assert.equal(v35Target(r,0,0).type,'boss');r.enemies[1].hp=0;assert.equal(v35Target(r,0,0),r.enemies[0])});
+test('homing rocket steers toward target without changing speed',()=>{const b={x:0,y:0,vx:900,vy:0},t={x:0,y:200};v35Steer(b,t,.1);assert(b.vy>0);assert(Math.abs(Math.hypot(b.vx,b.vy)-900)<.01)});
+test('only toggled admin aim overrides regular player direction',()=>{const r={enemies:[{x:100,y:0,hp:10,type:'grunt'}],bullets:[]};const p=player(0,'t');p.x=0;p.y=0;p.angle=Math.PI/2;p.admin=true;p.adminAim=true;firePlayer(r,p);assert(Math.abs(p.angle)<.01);assert(r.bullets[0].vx>0);p.adminAim=false;p.angle=Math.PI/2;firePlayer(r,p);assert(Math.abs(p.angle-Math.PI/2)<.01)});
+
+test.after(()=>stop());

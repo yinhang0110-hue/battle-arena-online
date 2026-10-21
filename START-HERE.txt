@@ -1,0 +1,20 @@
+BATTLE ARENA ONLINE — RENDER READY
+
+This is the full live co-op server AND game website in one project.
+Do not upload this project to Netlify Drop: Netlify cannot run the persistent WebSocket server.
+
+FASTEST HOSTING ROUTE:
+1. Upload all these files and folders to a new GitHub repository.
+2. On https://dashboard.render.com select New > Web Service and connect that repository.
+3. Select Node runtime; build command `npm install`, start command `npm start`.
+   Free service plan may be available. Some free plans sleep when unused, causing a delayed first connection.
+4. Wait for successful deployment; open the HTTPS URL Render provides.
+5. Your friends open EXACTLY THE SAME URL.
+6. Host selects CREATE ROOM, sends the five-character code, friends JOIN ROOM.
+7. Important: THIS FOUR-PLAYER EDITION requires 4 players to click START.
+
+To run locally (optional): install Node.js 20+, then `npm install`, `npm test`, `npm start`.
+Open http://localhost:3000 (only accessible from your computer).
+
+Do not assume deployment happened simply because you downloaded this ZIP.
+Your existing Netlify campaign and browser saves are not changed.

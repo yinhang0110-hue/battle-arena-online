@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Battle Arena V41 — Weapon Fix</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0e1626;color:#e8f2ff;font:16px Arial,sans-serif;text-align:center}
+h1{color:#87d3ff;margin:15px 0 6px}p{margin:7px}#wrap{position:relative;max-width:1280px;width:97%;margin:10px auto}#wrap:fullscreen{max-width:none;width:100vw;height:100vh;background:#040814;display:flex;align-items:center;justify-content:center;padding:0;margin:0}#wrap:fullscreen canvas{width:100vw;height:100vh;border-radius:0;border-width:0}#wrap:fullscreen #panel{border-radius:0}#hudButtons{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:6px auto}
+canvas{display:block;width:100%;background:#17283b;border:3px solid #70bfff;border-radius:12px;cursor:crosshair;touch-action:none;image-rendering:pixelated;image-rendering:crisp-edges;box-shadow:0 0 0 4px rgba(118,185,255,.08),0 26px 58px rgba(0,0,0,.38)}
+#panel{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;background:rgba(7,14,27,.88);border-radius:12px;overflow-y:auto}
+#panelInner{width:min(94%,660px);max-height:94%;overflow:auto;padding:14px 10px}
+#panel h2{font-size:28px;color:#ffdc65;margin:4px 0 12px}#panelDesc{line-height:1.5}
+button{border:0;border-radius:9px;margin:5px;padding:11px 15px;background:#ffda63;color:#222b39;font-size:15px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}.shopGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.shopCard{border:1px solid #5a7896;border-radius:10px;padding:9px;background:#203247;text-align:left}.shopCard b{color:#a8e9ff}.shopCard p{font-size:13px;line-height:1.4;margin:7px 0}
+.shopCard button{font-size:13px;margin:3px 0}#status{color:#ffe09b;min-height:20}
+.heroGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}.heroCard{background:#203247;border:1px solid #6384a2;border-radius:11px;padding:11px 7px}.heroCard strong{display:block;color:#b3e8ff;margin:8px 0}.heroCard small{display:block;min-height:43px;line-height:1.3}.heroAvatar{font-size:33px}.hint{color:#c5d9ed;font-size:13px}.inventoryRow{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #3f5970;padding:7px}.skillGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}.skillCard{background:#203247;border:1px solid #54708d;border-radius:10px;padding:10px;text-align:left}.skillCard p{font-size:13px;line-height:1.4}#panelInner{scrollbar-width:thin}#controlTips{font-size:14px;color:#b3cee7}#panelInner .inventoryRow{font-size:13px;text-align:left}#panelInner button{font-size:13px}
+@media(max-width:560px){h1{font-size:20px}#panel h2{font-size:21px}.shopGrid,.heroGrid,.skillGrid{grid-template-columns:1fr}button{padding:9px 11px}#controlTips{font-size:12px}}
+
+.worldGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px auto}.worldCard{background:#203648;border:1px solid #6689a8;border-radius:12px;padding:12px}.worldCard strong{display:block;color:#f4dc95;font-size:17px}.worldCard p{font-size:13px;min-height:60px;line-height:1.35}.worldIcon{font-size:42px;margin-bottom:8px}.worldCard small{color:#85e1b7} @media(max-width:560px){.worldGrid{grid-template-columns:1fr}.worldCard p{min-height:0}}
+
+/* Lesson 10: living story, relationships, battle allies and cinematic boss */
+#panelInner{width:min(96%,760px)}
+.campaignPaths{width:min(100%,590px);height:auto;display:block;margin:10px auto;border:1px solid #526b86;border-radius:14px;background:radial-gradient(circle at 50% 18%,#344c68,#111d30 80%)}
+.mapNode{cursor:pointer;outline:none}.mapNode:focus .nodeOuter{stroke:#ffdb75;stroke-width:5}
+.mapNode text{font:bold 11px Arial;fill:#eff6ff;pointer-events:none}.mapNode .nodeOuter{stroke:#a1c2db;stroke-width:2}
+.mapNode.locked{opacity:.4;cursor:not-allowed}.mapNode.done .nodeOuter{stroke:#73e2a2;stroke-width:4}
+.mapNode .mapIcon{font-size:23px}.routeLine{fill:none;stroke:#85a6c8;stroke-width:5;stroke-dasharray:9 6;opacity:.7}
+.routeLine.cleared{stroke:#76e2aa;stroke-dasharray:none}
+.npcScene{display:flex;gap:15px;align-items:center;text-align:left;background:linear-gradient(120deg,#243d59,#182638);border:1px solid #6385a8;border-radius:14px;padding:14px;margin:10px auto;max-width:650px}
+.npcScene svg{width:112px;flex-shrink:0}.npcScene p{font-size:16px;line-height:1.5;margin:6px 0;min-height:65px}
+.npcScene strong{color:#ffdd86}.typeCursor{color:#ffda70;animation:blink .6s step-end infinite}@keyframes blink{50%{opacity:0}}
+.cutsceneFrame{border-radius:12px;border:1px solid #647d9f;padding:20px 15px;background:linear-gradient(135deg,#2b4862,#3c294e);margin:12px auto;min-height:170px}
+.cutsceneVisual{font-size:55px;animation:floatup 1.6s ease-in-out infinite alternate}@keyframes floatup{to{transform:translateY(-7px)}}
+.cutsceneFrame p{line-height:1.6;font-size:18px}
+@media(max-width:550px){.npcScene{flex-direction:column}.npcScene svg{width:78px}.npcScene p{font-size:14px}.mapNode text{font-size:10px}}
+/* Lesson 11 polish: splash, menus and animation accessibility */
+body{background:radial-gradient(ellipse at 50% 15%,#20334e,#0b111f 72%)}
+#wrap{box-shadow:0 24px 70px #0008;border-radius:14px}
+button{transition:transform .13s,background .15s,box-shadow .15s}
+button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 4px 16px #ffda633f}
+button:focus-visible{outline:3px solid #91e4ff;outline-offset:2px}
+.titleSplash{border:1px solid #678bb0;border-radius:17px;padding:17px;background:radial-gradient(circle at 50% 25%,#344969,#151e35 70%);box-shadow:inset 0 0 32px #85baff13}
+.titleSplash .crown{font-size:64px;filter:drop-shadow(0 0 14px #ffde7699);animation:floatup 1.6s ease-in-out infinite alternate}
+.titleSplash h3{font-size:30px;letter-spacing:3px;color:#ffe29c;margin:10px 0}
+.titleSplash p{color:#c9d9f0;font-size:14px;line-height:1.6}
+.settingBar{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px auto}
+.settingBar button.active{background:#93e6b9;color:#103028}
+#panelInner{max-height:96%;overflow:auto}
+@media(prefers-reduced-motion:reduce){.titleSplash .crown{animation:none}button{transition:none}}
+
+/* Lesson 12: accessible controls and settings */
+#mobilePad{max-width:900px;margin:9px auto;padding:4px 10px;display:flex;justify-content:space-between;gap:10px;touch-action:none;user-select:none}
+.padGroup{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#mobilePad button{min-width:49px;min-height:49px;margin:1px;padding:9px 11px;background:#2b526e;color:#fff;border:1px solid #83afcf;touch-action:none}
+#mobilePad .hot{background:#f6c65b;color:#233247}
+#mobilePad .special{background:#537b85}
+#utilityBar{max-width:900px;margin:5px auto;display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+#utilityBar button{background:#34526d;color:#eef6ff;border:1px solid #759bbd}
+.settingsGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left;margin:12px 0}
+.settingsCard{background:#203448;border:1px solid #54718c;padding:12px;border-radius:10px}
+.settingsCard label{display:block;margin-bottom:8px;font-size:14px;color:#b9dcf8}
+.settingsCard select{width:100%;padding:9px;border-radius:7px;background:#102236;color:#fff;border:1px solid #709bbf}
+.settingsCard button{width:100%;margin:4px 0}
+@media(max-width:560px){#mobilePad{flex-direction:column;align-items:stretch}.padGroup{justify-content:center}.settingsGrid{grid-template-columns:1fr}#mobilePad button{min-width:48px}}
+.leaderboardScroll{overflow:auto;max-height:300px;border:1px solid #557194;border-radius:9px;margin:12px 0}
+.leaderboardTable{width:100%;border-collapse:collapse;font-size:12px;min-width:510px;text-align:left;color:#edf4ff}
+.leaderboardTable th,.leaderboardTable td{padding:9px 7px;border-bottom:1px solid #3f556d;white-space:nowrap}
+.leaderboardTable th{background:#193149;position:sticky;top:0}
+.leaderboardTable tr:nth-child(even){background:rgba(115,149,188,.12)}
+.leaderboardFirst{color:#ffdc86;font-weight:bold}
+</style>
+<style id="v31navigationcss">#v31navigation{position:fixed;top:8px;left:8px;z-index:2147483600;display:flex;flex-wrap:wrap;gap:5px;max-width:calc(100vw - 16px);padding:7px;border-radius:11px;background:rgba(7,15,31,.94);border:1px solid #7799be;box-shadow:0 6px 24px #0009;font:700 12px system-ui,Arial}#v31navigation a{color:#e8f4ff!important;background:#263e57;text-decoration:none!important;border-radius:7px;padding:8px 9px;white-space:nowrap;display:inline-block}#v31navigation a:hover,#v31navigation a:focus{background:#416790}body{scroll-padding-top:70px}@media(max-width:540px){#v31navigation{gap:3px;font-size:10px}#v31navigation a{padding:6px}}</style></head>
+<body><nav id="v31navigation" aria-label="Game navigation"><a href="/menu.html">⌂ GAME MENU</a><a href="/classic.html">🎮 ORIGINAL</a><a href="/online.html">🌐 ONLINE</a><a href="/soundtracks.html">♫ MUSIC</a><a href="/saves.html">💾 SAVES</a></nav>
+<h1>⚔️ BATTLE ARENA V43 — ILLUSTRATED RPG 🚀</h1>
+<p id="controlTips">WASD Move · Mouse Aim · Click/Space Fire · 1–5 Weapons · Shift Dash · Q Shield · I Inventory · K Skills · E Gear · H Achievements · R Restart · F Admin Rocket Nova · G Aimbot · V Ultimate · ⛶ Fullscreen · Improved Battle Arts FX</p>
+<div id="hudButtons"><button id="fullscreenBtn">⛶ FULLSCREEN</button><button id="hdPixelBtn">🧱 PIXEL FX ON</button></div><div id="wrap">
+<canvas id="game" width="1280" height="720"></canvas>
+<div id="panel"><div id="panelInner"><h2 id="panelTitle">BATTLE ARENA</h2><p id="panelDesc">Longer story missions · 12-wave HELL Gauntlet · stronger hazards.</p><div id="panelButtons"><button id="beginButton">START GAME</button></div></div></div>
+</div>
+
+<div id="originalAdminBar" style="display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;margin:9px auto;padding:8px;border:1px solid #6c4665;border-radius:9px;max-width:900px;background:#211d35;color:#fff;font:14px Arial">
+ <strong>🚀 ORIGINAL ADMIN — ENTER PASSCODE</strong><input id="originalAdminPass" type="password" placeholder="Passcode" aria-label="Original game admin passcode" style="max-width:125px;padding:9px;border-radius:6px;border:1px solid #967cbd;background:#151c2c;color:white" autocomplete="off">
+ <button type="button" id="originalAdminUnlock">UNLOCK</button><button type="button" id="originalAdminAim">🎯 AIMBOT OFF (G)</button><button type="button" id="originalAdminFire" disabled>🚀 ROCKET NOVA (F) · 🎯 G AIMBOT</button><span id="originalAdminStatus">Locked</span>
+</div><div id="v36UltimateBar" style="margin:9px auto;padding:10px;max-width:900px;border:2px solid #8266db;border-radius:10px;background:#171d38;color:white;font:14px system-ui;text-align:center"><strong>✨ HERO ULTIMATE</strong> · <span id="v36UltStatus">V = Ultimate</span> <button type="button" id="v36UltButton">⚡ ACTIVATE (V)</button><p style="margin:4px">Guardian: Fortress Slam · Scout: Lightning Rush · Engineer: Orbital Strike · 24s cooldown</p></div>
+<div id="utilityBar"><button id="settingsButton" type="button">⚙ SETTINGS</button><button id="pauseButton" type="button">⏸ PAUSE</button></div>
+<div id="mobilePad" aria-label="Touch game controls">
+ <div class="padGroup"><button data-touch="w" aria-label="Move up">▲</button><button data-touch="a" aria-label="Move left">◀</button><button data-touch="s" aria-label="Move down">▼</button><button data-touch="d" aria-label="Move right">▶</button></div>
+ <div class="padGroup"><button data-touch="fire" class="hot">FIRE</button><button data-touch="dash" class="special">DASH</button><button data-touch="shield" class="special">SHIELD</button></div>
+</div>
+<p id="status">Choose a branching story mission, speak to NPCs, and defeat the Shattered King.</p>
+<script>
+'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height;ctx.imageSmoothingEnabled=false;let hdPixelFx=true;
+const panel=document.getElementById('panel'),panelTitle=document.getElementById('panelTitle');
+const panelDesc=document.getElementById('panelDesc'),panelButtons=document.getElementById('panelButtons');
+const status=document.getElementById('status');
+let state='menu',wave=1,score=0,coins=0,kills=0,time=0,lastFrame=0,lastShot=-100,hurtTimer=0;
+let keys={},bullets=[],enemyBullets=[],enemies=[],explosions=[],boss=null,selected=0,weapons=[];
+let mouse={x:650,y:260,down:false};
+// LESSON 5: hero choice, experience, inventory, and skill points
+const HEROES=[
+ {name:'GUARDIAN',icon:'🛡️',color:'#60b8ff',hp:130,speed:215,description:'Extra health; safer for beginners'},
+ {name:'SCOUT',icon:'⚡',color:'#77efc1',hp:85,speed:300,description:'Fast movement and quick escapes'},
+ {name:'ENGINEER',icon:'🔧',color:'#ffcc72',hp:100,speed:235,description:'Starts with 35 bonus coins'}
+];
+let heroIndex=0, xp=0, level=1, skillPoints=0, pickups=[], pickupSerial=0;
+let inventory={medkit:0,boost:0};
+let skills={vitality:0,power:0,agility:0,fortune:0,precision:0};
+const BOOST_DURATION=8, BOOST_DAMAGE=2, MAX_BOOST_STACKS=5;
+// V16: Crit chance is 10% base + 3% per PRECISION level (max 25%).
+// A successful crit deals 1.75x damage. Rolls are independent per projectile.
+const CRIT_BASE=.10, CRIT_PER_SKILL=.03, CRIT_MULTIPLIER=1.75;
+function criticalChance(){return Math.min(.25,CRIT_BASE+(skills.precision||0)*CRIT_PER_SKILL);}
+function rollCritical(){return Math.random()<criticalChance();}
+let boostTimers=[],shopLocked=false;
+let lastAutoPickupSummary="";
+// LESSON 6: persistent account, equipment, loot and achievements
+const SAVE_KEY='battleArenaExtendedV6Save_v1'; // Keep V16 progression compatible, and save selected ally
+const DEFAULT_SAVE=()=>({gems:0,totalKills:0,bestWave:1,runs:0,upgrades:{health:0,speed:0,damage:0},weaponLevels:{pistol:0,shotgun:0,blaster:0,rocket:0,ion:0},ionUnlocked:false,equipment:[],equipped:{weapon:null,armor:null,charm:null},achievements:[],profileName:"Adventurer",questCounts:{kills:0,bosses:0,missions:0},claimedQuests:[],completedArenas:[],storyChoices:{},relationships:{mira:0,ilya:0,taro:0,nyra:0},selectedAlly:'auto',endingType:null,storyEnding:false});
+// V18: Local Hall of Fame. Only real run endings are recorded, never shop pauses.
+const LEADERBOARD_KEY='battleArenaV18LocalLeaderboard_v1';
+const LEADERBOARD_LIMIT=30;
+let leaderboardRecorded=false;
+function readLeaderboard(){
+ try{const value=JSON.parse(localStorage.getItem(LEADERBOARD_KEY)||'[]');
+  return Array.isArray(value)?value.filter(e=>e && ['campaign','hell'].includes(e.mode) && Number.isFinite(e.score)).slice(0,200):[];
+ }catch(e){return [];}
+}
+function writeLeaderboard(rows){try{localStorage.setItem(LEADERBOARD_KEY,JSON.stringify(rows));}catch(e){say('Leaderboard could not be saved. Allow local storage in your browser.');}}
+function recordLeaderboard(outcome){
+ if(leaderboardRecorded)return;
+ leaderboardRecorded=true;
+ const entry={mode:hellMode?'hell':'campaign',name:String(profileName()||'Adventurer').slice(0,24),arena:activeArena.name,
+  difficulty:hellMode?'HELL':difficulty.toUpperCase(),hero:HEROES[heroIndex].name,
+  wave,score:Math.floor(score),kills,time:Math.round(hellMode?hellElapsed:time),
+  outcome,date:new Date().toISOString()};
+ const rows=readLeaderboard();rows.push(entry);
+ rows.sort((a,b)=>b.score-a.score || b.wave-a.wave || a.time-b.time);
+ writeLeaderboard(rows.slice(0,150));
+}
+function showLeaderboard(mode='campaign',back=showWorldMap){
+ state='menu';keys={};mouse.down=false;
+ openPanel('🏆 HALL OF FAME — '+(mode==='hell'?'HELL GAUNTLET':'CAMPAIGN'),
+  'Local records for this browser only. Score decides rank; ties favor higher waves and shorter runs. Top '+LEADERBOARD_LIMIT+' shown.');
+ const tabs=document.createElement('div');tabs.className='settingBar';panelButtons.appendChild(tabs);
+ tabs.appendChild(button('⚔️ CAMPAIGN',()=>showLeaderboard('campaign',back)));
+ tabs.appendChild(button('💀 HELL MODE',()=>showLeaderboard('hell',back)));
+ const rows=readLeaderboard().filter(e=>e.mode===mode)
+  .sort((a,b)=>b.score-a.score||b.wave-a.wave||a.time-b.time).slice(0,LEADERBOARD_LIMIT);
+ if(!rows.length){const note=document.createElement('p');note.textContent='No scores yet! Complete a mission or lose a run to record your first score.';panelButtons.appendChild(note);}
+ else{
+  const wrapper=document.createElement('div');wrapper.className='leaderboardScroll';
+  const table=document.createElement('table');table.className='leaderboardTable';
+  const head=document.createElement('thead');const hrow=document.createElement('tr');
+  for(const label of ['#','Player','Score','Wave','Kills','Time','Result']){const cell=document.createElement('th');cell.textContent=label;hrow.appendChild(cell);}head.appendChild(hrow);table.appendChild(head);
+  const body=document.createElement('tbody');
+  rows.forEach((r,i)=>{const tr=document.createElement('tr');if(i===0)tr.className='leaderboardFirst';
+   const cells=[i+1,r.name,r.score,r.wave,r.kills,Math.floor(r.time/60)+':'+String(r.time%60).padStart(2,'0'),r.outcome];
+   cells.forEach(value=>{const td=document.createElement('td');td.textContent=String(value);tr.appendChild(td);});
+   tr.title=r.arena+' · '+r.hero+' · '+r.difficulty+' · '+new Date(r.date).toLocaleString();body.appendChild(tr);
+  });table.appendChild(body);wrapper.appendChild(table);panelButtons.appendChild(wrapper);
+ }
+ const small=document.createElement('p');small.className='hint';small.textContent='Leaderboard is saved only in this browser, not shared online. It cannot verify scores from other players.';panelButtons.appendChild(small);
+ panelButtons.appendChild(button('🗑 CLEAR LEADERBOARD',()=>{if(confirm('Delete all local leaderboard records? This will not erase your campaign save.')){writeLeaderboard([]);showLeaderboard(mode,back);}},!readLeaderboard().length));
+ panelButtons.appendChild(button('← BACK',back));
+}
+
+let meta=loadSave(), runLootCount=0;
+let dialogueTimer=null,sceneTimer=null,hazards=[],hazardWaveStart=0;
+let sceneSeen=new Set();
+let ally=null, allyCooldown=0, battleBonus={hp:0,damage:0,enemySpeed:1,extraCoins:0};
+let bossPhaseSeen=false;
+let lastRandomBossType=null; // Prevent the same random boss appearing twice in a row.
+// LESSON 11: visual feedback and adjustable difficulty
+let particles=[],damageTexts=[],screenShake=0,flashStrength=0;
+let attackKick=0,particleTime=0,trailTimer=0;
+let difficulty='hell';
+let hellMode=false,hellCleared=false,hellWarnings=[],hellElapsed=0,hellDeaths=0;
+const HELL_ARENA={id:'hell',icon:'💀',name:'The Crown Gauntlet',subtitle:'No checkpoints · Twelve waves',goal:12,reward:0,enemySpeed:1.08,enemyHp:1,spawnBonus:0,bg:'#201b2f',grid:'#4a3958',bossEvery:4,faction:'crown',hazard:'void',requires:[],final:true};
+const DIFFICULTY={
+ easy:{hp:.72,speed:.83,damage:.68,reward:1},
+ normal:{hp:1,speed:1,damage:1,reward:1},
+ hard:{hp:1.48,speed:1.25,damage:1.35,reward:1.5},
+ hell:{hp:1.65,speed:1.32,damage:1.4,reward:0}
+};
+// V9: original high-energy symphonic/electronic score, synthesized locally.
+// No copyrighted music samples, melodies, or external audio files are included.
+let musicEnabled=true,audioContext=null,musicTicker=null,musicStep=0;
+let musicBus=null,musicLowpass=null,musicDucker=null,sfxBus=null,masterBus=null,audioCompressor=null,noiseBuffer=null;
+// V39: a quiet, optional ambient layer, with original notes/rhythm untouched.
+let musicAirSend=null,musicAirOn=true;
+try{musicAirOn=localStorage.getItem('battleArenaV39MusicAir')!=='off';}catch(e){}
+let musicVolume=.72, sfxVolume=.55, musicMode='battle';
+let musicNextTime=0;
+let jukeboxMode=null; // Preview tracks without starting or modifying a campaign.
+
+let sfxEnabled=true;
+const MUSIC_SAVE_KEY='battleArenaV9Audio_v1';
+try{
+ const m=JSON.parse(localStorage.getItem(MUSIC_SAVE_KEY)||'null');
+ if(m&&typeof m==='object'){
+  if(typeof m.musicEnabled==='boolean')musicEnabled=m.musicEnabled;
+  if(Number.isFinite(m.musicVolume))musicVolume=Math.max(0,Math.min(1,m.musicVolume));
+  if(Number.isFinite(m.sfxVolume))sfxVolume=Math.max(0,Math.min(1,m.sfxVolume));
+  if(typeof m.sfxEnabled==='boolean')sfxEnabled=m.sfxEnabled;
+ }
+}catch(e){}
+function saveAudioPrefs(){try{localStorage.setItem(MUSIC_SAVE_KEY,JSON.stringify({musicEnabled,musicVolume,sfxEnabled,sfxVolume}));}catch(e){}}
+function ensureAudio(){
+ try{
+  if(!audioContext){
+   audioContext=new(window.AudioContext||window.webkitAudioContext)();
+   masterBus=audioContext.createGain();masterBus.gain.value=.87;
+   audioCompressor=audioContext.createDynamicsCompressor();
+   audioCompressor.threshold.value=-17;audioCompressor.knee.value=18;
+   audioCompressor.ratio.value=4;audioCompressor.attack.value=.004;audioCompressor.release.value=.18;
+   musicBus=audioContext.createGain();sfxBus=audioContext.createGain();
+   musicLowpass=audioContext.createBiquadFilter();musicLowpass.type='lowpass';musicLowpass.frequency.value=18000;musicLowpass.Q.value=.7;
+   musicDucker=audioContext.createGain();musicDucker.gain.value=1;
+   musicBus.connect(musicLowpass);musicLowpass.connect(musicDucker);musicDucker.connect(audioCompressor);sfxBus.connect(audioCompressor);
+   // A single quiet stereo echo for tonal instruments only; rhythm and melodies stay identical.
+   const airDelay=audioContext.createDelay(.5);airDelay.delayTime.value=.125;
+   const airFilter=audioContext.createBiquadFilter();airFilter.type='lowpass';airFilter.frequency.value=2400;
+   musicAirSend=audioContext.createGain();musicAirSend.gain.value=musicAirOn?.095:0;
+   airDelay.connect(airFilter);airFilter.connect(musicAirSend);musicAirSend.connect(musicBus);
+   musicAirSend.input=airDelay;
+   audioCompressor.connect(masterBus);masterBus.connect(audioContext.destination);
+   noiseBuffer=audioContext.createBuffer(1,Math.ceil(audioContext.sampleRate*.6),audioContext.sampleRate);
+   const arr=noiseBuffer.getChannelData(0);
+   for(let i=0;i<arr.length;i++)arr[i]=Math.random()*2-1;
+  }
+  musicBus.gain.setTargetAtTime(musicEnabled?musicVolume:0,audioContext.currentTime,.02);
+  sfxBus.gain.setTargetAtTime(sfxEnabled?sfxVolume:0,audioContext.currentTime,.02);
+  if(audioContext.state==='suspended')audioContext.resume();
+ }catch(e){}
+}
+function beep(frequency,duration=.12,type='sine',volume=.025){
+ if(!sfxEnabled)return;
+ try{ensureAudio();if(!audioContext||!sfxBus)return;
+  const now=audioContext.currentTime,osc=audioContext.createOscillator(),amp=audioContext.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(frequency,now);
+  amp.gain.setValueAtTime(Math.min(.15,volume*2.3),now);
+  amp.gain.exponentialRampToValueAtTime(.0001,now+Math.max(.02,duration));
+  osc.connect(amp);amp.connect(sfxBus);osc.start(now);osc.stop(now+Math.max(.02,duration));
+ }catch(e){}
+}
+const midiHz=n=>440*Math.pow(2,(n-69)/12);
+// Oscillator with an envelope. Two detuned voices build a "string/brass" sound.
+function playTone(midi,when,length,kind='lead',strength=1){
+ if(!audioContext||!musicBus||!Number.isFinite(midi)||midi<=0)return;
+ const ctxA=audioContext;
+ const filter=ctxA.createBiquadFilter();filter.type='lowpass';
+ filter.frequency.value=kind==='bass'?650:kind==='pad'?1350:kind==='brass'?2100:3500;
+ const env=ctxA.createGain();const loud={bass:.20,pad:.063,brass:.115,lead:.10}[kind]||.10;
+ const attack=kind==='pad'?.07:.008,release=kind==='pad'?.35:.11;
+ env.gain.setValueAtTime(.0001,when);
+ env.gain.linearRampToValueAtTime(loud*strength,when+attack);
+ env.gain.setValueAtTime(loud*strength,Math.max(when+attack,when+length-release));
+ env.gain.exponentialRampToValueAtTime(.0001,when+length);
+ filter.connect(env);env.connect(musicBus);
+ // Very light delayed tail on lead and pad only, never the kick/snare.
+ if(musicAirSend && (kind==='lead'||kind==='pad'))env.connect(musicAirSend.input);
+ const voices=kind==='bass'?1:2;
+ for(let k=0;k<voices;k++){
+  const osc=ctxA.createOscillator();osc.type=kind==='bass'?'sawtooth':kind==='pad'?'sawtooth':kind==='brass'?'sawtooth':'triangle';
+  osc.frequency.setValueAtTime(midiHz(midi),when);
+  osc.detune.value=k===0?-6:6;
+  osc.connect(filter);osc.start(when);osc.stop(when+length+.02);
+ }
+}
+function noiseHit(when,duration,cutoff,level){
+ if(!noiseBuffer||!audioContext||!musicBus)return;
+ const source=audioContext.createBufferSource();source.buffer=noiseBuffer;
+ const filter=audioContext.createBiquadFilter();filter.type='highpass';filter.frequency.value=cutoff;
+ const env=audioContext.createGain();
+ env.gain.setValueAtTime(level,when);env.gain.exponentialRampToValueAtTime(.0001,when+duration);
+ source.connect(filter);filter.connect(env);env.connect(musicBus);source.start(when);source.stop(when+duration);
+}
+function kick(when,strength=1){
+ const osc=audioContext.createOscillator(),env=audioContext.createGain();osc.type='sine';
+ osc.frequency.setValueAtTime(135,when);osc.frequency.exponentialRampToValueAtTime(42,when+.14);
+ env.gain.setValueAtTime(.44*strength,when);env.gain.exponentialRampToValueAtTime(.0001,when+.19);
+ osc.connect(env);env.connect(musicBus);osc.start(when);osc.stop(when+.2);
+}
+function snare(when){noiseHit(when,.14,700,.17);playTone(45,when,.09,'bass',.35);}
+// Original 16-step riffs: minor-key, syncopated, no borrowed franchise melodies.
+const BATTLE_RIFF=[69,0,72,76,0,72,74,0,69,0,67,72,0,74,72,0,
+                   69,72,76,79,0,76,74,72,69,0,72,74,76,0,72,0];
+const BOSS_RIFF=[69,72,76,0,79,76,72,74,81,0,79,76,74,72,76,0,
+                 69,70,74,77,0,74,70,72,77,0,79,77,74,72,70,0];
+const CHORDS=[[45,52,57,60],[41,48,53,57],[43,50,55,58],[40,47,52,56]];
+// ORIGINAL FINAL CAMPAIGN SCORE: two exclusive tracks for Crown Citadel.
+// Composed as short generative ostinatos; no samples or third-party melodies.
+const CROWN_CHORDS=[[45,52,57,60],[40,47,52,55],[41,48,53,57],[43,50,55,59]];
+const FINALE_CHORDS=[[45,52,57,60],[43,50,55,58],[41,48,53,57],[40,47,52,56]];
+const CROWN_RIFF=[69,0,72,76,79,76,72,0,67,69,72,0,76,74,72,0,
+ 69,72,76,81,79,76,74,72,67,0,69,72,76,0,74,0];
+const FINALE_RIFF=[81,79,76,72,84,81,79,76,77,76,72,69,81,79,76,72,
+ 84,83,81,79,88,84,83,81,79,77,76,72,81,84,88,0,
+ 81,84,88,86,84,81,79,76,77,79,81,84,83,81,79,76,
+ 84,81,79,76,88,86,84,81,79,76,74,72,81,79,76,0];
+// Five distinctive original regional arrangements. No copyrighted soundtrack samples.
+const REGION_SCORES={
+ meadow:{label:'Verdant Outpost · Dawn of Hope',bpm:132,
+  chords:[[45,52,57,60],[48,55,60,64],[41,48,53,57],[43,50,55,59]],
+  riff:[69,72,76,0,79,76,72,74,76,0,72,69,67,69,72,0, 72,76,79,81,79,76,72,0,69,72,74,76,72,0,69,0],
+  bass:.91,brass:.75,hat:.8,strings:1.25},
+ frost:{label:'Frozen Citadel · Crystal Siege',bpm:146,
+  chords:[[50,57,62,65],[46,53,58,62],[43,50,55,58],[45,52,57,60]],
+  riff:[86,0,84,81,79,0,81,84,86,88,86,84,81,0,79,0, 84,81,79,0,77,79,81,84,86,0,84,81,79,77,74,0],
+  bass:.83,brass:.58,hat:1.2,strings:1.45},
+ scrap:{label:'Iron Wastes · Steel Uprising',bpm:158,
+  chords:[[40,47,52,55],[43,50,55,58],[38,45,50,53],[41,48,53,57]],
+  riff:[64,64,0,67,69,0,67,64,62,0,64,67,69,71,67,0,64,67,71,0,74,71,67,64,62,64,0,67,69,67,64,0],
+  bass:1.42,brass:1.4,hat:1.4,strings:.73},
+ ember:{label:'Ember Fortress · Ashen March',bpm:166,
+  chords:[[41,48,53,56],[40,47,52,55],[38,45,50,53],[36,43,48,52]],
+  riff:[77,80,84,0,82,80,77,75,77,80,82,84,87,84,82,0,77,75,72,75,77,80,82,84,82,80,77,75,72,0,75,77],
+  bass:1.28,brass:1.48,hat:1.25,strings:1.18},
+ throne:{label:'Crown Citadel · The Last Oath',bpm:150,chords:CROWN_CHORDS,riff:CROWN_RIFF,
+  bass:1.18,brass:1.25,hat:.95,strings:1.5},
+ hell:{label:'HELL Gauntlet · No Mercy',bpm:178,chords:FINALE_CHORDS,riff:BOSS_RIFF,
+  bass:1.5,brass:1.5,hat:1.45,strings:1.16}
+};
+function activeMusicMode(){
+ if(jukeboxMode!==null)return jukeboxMode;
+ const id=hellMode?'hell':(activeArena?.id||'meadow');
+ if(id==='throne' && boss?.type==='KING' && wave===activeArena.goal)return 'finale';
+ return id+(boss?'_boss':'');
+}
+function scoreForMode(mode){
+ const id=mode.replace(/_boss$/,'');
+ return REGION_SCORES[id]||REGION_SCORES.meadow;
+}
+function updateMusicAcoustics(){
+ if(!audioContext||!musicLowpass||!musicDucker)return;
+ // Keep the composition playing at the same musical position in menus; only its timbre changes.
+ // Sound effects are on a separate bus and remain unmuffled.
+ const hidden=document.hidden;
+ const isCombat=(state==='playing'||jukeboxMode!==null)&&!hidden;
+ const menuCutoff=state==='shop'?440:state==='paused'?520:state==='inventory'?630:state==='settings'?590:920;
+ const cutoff=isCombat?17000:menuCutoff;
+ const volume=isCombat?1:(hidden?.14:state==='shop'?.26:state==='paused'?.30:.36);
+ const now=audioContext.currentTime;
+ musicLowpass.frequency.setTargetAtTime(cutoff,now,.16);
+ musicDucker.gain.setTargetAtTime(volume,now,.13);
+}
+function musicStepAt(when){
+ const mode=musicMode,region=scoreForMode(mode),bossTrack=mode.endsWith('_boss')||mode==='finale',
+   finale=mode==='finale',dramatic=finale||region===REGION_SCORES.throne,
+   step=musicStep++,pos=step%16,bar=Math.floor(step/16)%4;
+ const chord=(finale?FINALE_CHORDS:region.chords)[bar],root=chord[0];
+ // Regional drums, bass movement, rhythmic strings and pitched brass accents.
+ if(pos===0||pos===8||(bossTrack&&(pos===6||pos===10)))kick(when,(finale?1.37:bossTrack?1.14:1)*region.bass);
+ if(pos===4||pos===12)snare(when);
+ if((region===REGION_SCORES.scrap||region===REGION_SCORES.ember||bossTrack)&&pos===14)kick(when,.65);
+ if(pos%2===0||((bossTrack||region===REGION_SCORES.scrap)&&pos%2===1))
+  noiseHit(when,.032,region===REGION_SCORES.frost?7200:region===REGION_SCORES.scrap?3000:4800,.037*region.hat*(bossTrack?1.2:1));
+ if(pos===0||pos===8)playTone(root,when,bossTrack?.38:.48,'bass',region.bass*(finale?1.25:1));
+ if(pos===0){for(const note of chord.slice(1))playTone(note+12,when,bossTrack?.99:1.26,'pad',.72*region.strings);}
+ if(pos%4===0)playTone(chord[(pos/4)%4]+24,when,bossTrack?.38:.24,'brass',.76*region.brass*(bossTrack?1.14:1));
+ if((region===REGION_SCORES.ember||dramatic)&&pos===2)playTone(root+31,when,.32,'brass',.88);
+ const riff=finale?FINALE_RIFF:region.riff;
+ const note=riff[step%riff.length];
+ if(note)playTone(note,when,bossTrack?.25:.21,'lead',bossTrack?1.34:1.0);
+ // Boss variations increase urgency without erasing the chosen region's identity.
+ if(bossTrack&&(pos===3||pos===11))playTone(chord[(pos>>2)%4]+36,when,.19,'lead',.44*(finale?1.8:1));
+ if(finale&&boss&&boss.stage>=3){
+  if(pos%4===2)playTone(chord[(pos>>2)%4]+36,when,.26,'lead',.99);
+  if(pos===3||pos===11)kick(when,.82);
+ }
+}
+function startMusic(){
+ if(musicTicker){clearInterval(musicTicker);musicTicker=null;}
+ if(!musicEnabled)return;
+ ensureAudio();if(!audioContext||!musicBus)return;
+ musicStep=0;musicMode=activeMusicMode();
+ musicNextTime=audioContext.currentTime+.06;
+ updateMusicAcoustics();
+ musicTicker=setInterval(()=>{
+  if(!musicEnabled||!audioContext)return;
+  updateMusicAcoustics();
+  // The same soundtrack continues in shops, pause screens, and skill/inventory overlays.
+  // Background tabs are not scheduled to avoid an audio backlog on return.
+  if(document.hidden){musicNextTime=audioContext.currentTime+.06;return;}
+  const mode=activeMusicMode();
+  if(mode!==musicMode){musicMode=mode;musicStep=0;musicNextTime=audioContext.currentTime+.06;}
+  if(musicNextTime<audioContext.currentTime-.5)musicNextTime=audioContext.currentTime+.03;
+  const region=scoreForMode(mode);
+  const bpm=mode==='finale'?176:region.bpm+(mode.endsWith('_boss')?12:0);
+  const stepLength=60/bpm/4;
+  let loops=0;
+  while(musicNextTime<audioContext.currentTime+.14&&loops++<4){
+   musicStepAt(musicNextTime);musicNextTime+=stepLength;
+  }
+ },30);
+}
+function toggleMusicPolish(){musicAirOn=!musicAirOn;try{localStorage.setItem('battleArenaV39MusicAir',musicAirOn?'on':'off');}catch(e){}
+ if(audioContext&&musicAirSend)musicAirSend.gain.setTargetAtTime(musicAirOn?.095:0,audioContext.currentTime,.12);}
+function setMusicVolume(raw){musicVolume=Math.max(0,Math.min(1,Number(raw)/100));saveAudioPrefs();if(audioContext&&musicBus)musicBus.gain.setTargetAtTime(musicVolume,audioContext.currentTime,.03);}
+function setSfxVolume(raw){sfxVolume=Math.max(0,Math.min(1,Number(raw)/100));saveAudioPrefs();if(audioContext&&sfxBus)sfxBus.gain.setTargetAtTime(sfxVolume,audioContext.currentTime,.03);}
+function setDifficulty(mode){
+ if(!DIFFICULTY[mode])return;
+ difficulty=mode;
+ try{localStorage.setItem('battleArena11Difficulty',mode);}catch(e){}
+ showTitleScreen();
+}
+function toggleMusic(){musicEnabled=!musicEnabled;saveAudioPrefs();
+ if(musicEnabled)startMusic();else{if(musicTicker){clearInterval(musicTicker);musicTicker=null;}if(audioContext&&musicBus)musicBus.gain.setTargetAtTime(0,audioContext.currentTime,.02);}
+ showTitleScreen();
+}
+function toggleSfx(){sfxEnabled=!sfxEnabled;saveAudioPrefs();
+ if(audioContext&&sfxBus)sfxBus.gain.setTargetAtTime(sfxEnabled?sfxVolume:0,audioContext.currentTime,.02);
+ showTitleScreen();}
+try{difficulty=localStorage.getItem('battleArena11Difficulty')||'normal';
+ if(!DIFFICULTY[difficulty])difficulty='normal';}catch(e){}
+function addParticles(x,y,color='#ffd75c',count=10,power=135){
+ if(!prefs.particles)return;count=Math.floor(count*(prefs.quality==='low'?.22:prefs.quality==='medium'?.55:1));
+ if(particles.length>300)particles.splice(0,100);
+ for(let i=0;i<count;i++){
+  const a=Math.random()*Math.PI*2,speed=(.3+Math.random())*power;
+  particles.push({x,y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:.3+Math.random()*.42,max:.72,size:2+Math.random()*4,color});
+ }
+}
+function floatText(x,y,text,color='#ffe28f'){
+ if(prefs.quality==='low')return;
+ damageTexts.push({x,y,text:String(text),life:.65,color});
+ if(damageTexts.length>70)damageTexts.shift();
+}
+function fxUpdate(dt){
+ particleTime+=dt;
+ for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.max(0,1-3*dt);p.vy*=Math.max(0,1-3*dt);p.life-=dt;}
+ particles=particles.filter(p=>p.life>0);
+ for(const t of damageTexts){t.y-=30*dt;t.life-=dt;}
+ damageTexts=damageTexts.filter(t=>t.life>0);
+ screenShake=Math.max(0,screenShake-35*dt);
+ flashStrength=Math.max(0,flashStrength-2*dt);
+ attackKick=Math.max(0,attackKick-7*dt);
+}
+function fxDraw(){
+ for(const p of particles){ctx.globalAlpha=Math.min(1,p.life/.35);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.size,p.size);}
+ ctx.globalAlpha=1;
+ ctx.font='bold 15px Arial';ctx.textAlign='center';
+ for(const t of damageTexts){ctx.globalAlpha=Math.min(1,t.life/.25);ctx.fillStyle=t.color;ctx.fillText(t.text,t.x,t.y);}
+ ctx.globalAlpha=1;ctx.textAlign='left';
+}
+
+// LESSON 12: settings saved separately from the campaign save
+const PREF_KEY='battleArenaReleasePrefs_v1';
+const DEFAULT_PREFS={quality:'high',particles:true,shake:true,reducedMotion:false,controls:{up:'w',down:'s',left:'a',right:'d',fire:' ',dash:'shift',shield:'q',inventory:'i',skills:'k',equipment:'e',achievements:'h'}};
+let prefs=JSON.parse(JSON.stringify(DEFAULT_PREFS));
+try{
+ const loaded=JSON.parse(localStorage.getItem(PREF_KEY)||'null');
+ if(loaded&&typeof loaded==='object'){
+  for(const k of ['quality','particles','shake','reducedMotion'])if(loaded[k]!==undefined)prefs[k]=loaded[k];
+  if(loaded.controls&&typeof loaded.controls==='object')for(const k of Object.keys(DEFAULT_PREFS.controls))if(typeof loaded.controls[k]==='string')prefs.controls[k]=loaded.controls[k];
+ }
+}catch(e){}
+function savePrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify(prefs));}catch(e){say('Settings could not be saved in this browser.');}}
+const ACTION_KEYS={up:'w',down:'s',left:'a',right:'d',fire:' ',dash:'shift',shield:'q',inventory:'i',skills:'k',equipment:'e',achievements:'h'};
+const REBINDABLE=['up','down','left','right','fire','dash','shield','inventory','skills','equipment','achievements'];
+function resolveActionKey(raw){
+ if(raw.startsWith('arrow'))return raw;
+ for(const action of REBINDABLE)if(prefs.controls[action]===raw)return ACTION_KEYS[action];
+ // reserved menu/weapon keys are still supported
+ if(['1','2','3','4','r'].includes(raw))return raw;
+ return '';
+}
+function keyLabel(k){return k===' '?'Space':k==='shift'?'Shift':k.toUpperCase();}
+let waitingForKey=null;
+function setRebind(action,key){
+ if(['escape','tab','enter','backspace','1','2','3','4','r'].includes(key)||key.startsWith('arrow')){say('That key is reserved. Choose another.');showSettings();return;}
+ for(const a of REBINDABLE){if(a!==action&&prefs.controls[a]===key){say('Key already in use: '+a);showSettings();return;}}
+ prefs.controls[action]=key;savePrefs();showSettings();
+}
+function showSettings(){
+ const wasPlaying=state==='playing';
+ if(wasPlaying){settingsPrevious='playing';state='settings';keys={};mouse.down=false;}
+ else if(state!=='settings')settingsPrevious=state;
+ waitingForKey=null;
+ openPanel('⚙ SETTINGS','Change controls, audio and visual effects. Each region has its own cinematic score; menus automatically muffle it.');
+ const grid=document.createElement('div');grid.className='settingsGrid';panelButtons.appendChild(grid);
+ const visual=document.createElement('div');visual.className='settingsCard';grid.appendChild(visual);
+ visual.innerHTML='<label>GRAPHICS QUALITY</label>';
+ const q=document.createElement('select');
+ for(const name of ['high','medium','low']){const o=document.createElement('option');o.value=name;o.textContent=name.toUpperCase();o.selected=prefs.quality===name;q.appendChild(o);}
+ q.onchange=()=>{prefs.quality=q.value;savePrefs();showSettings();};visual.appendChild(q);
+ for(const [name,label] of [['particles','Particle effects'],['shake','Screen shake'],['reducedMotion','Reduce motion']]){
+  const b=button((prefs[name]?'✅ ':'⬜ ')+label,()=>{prefs[name]=!prefs[name];savePrefs();showSettings();});visual.appendChild(b);
+ }
+ const audio=document.createElement('div');audio.className='settingsCard';grid.appendChild(audio);
+ const label=document.createElement('label');label.textContent='AUDIO';audio.appendChild(label);
+ audio.appendChild(button(musicEnabled?'🎵 Music: ON':'🎵 Music: OFF',()=>{musicEnabled=!musicEnabled;saveAudioPrefs();if(musicEnabled)startMusic();else{if(musicTicker)clearInterval(musicTicker);musicTicker=null;if(audioContext&&musicBus)musicBus.gain.setTargetAtTime(0,audioContext.currentTime,.02);}showSettings();}));
+ audio.appendChild(button(musicAirOn?'✨ Music polish: ON':'🎵 Original mix: ON',()=>{toggleMusicPolish();showSettings();}));
+ audio.appendChild(button(sfxEnabled?'🔊 Sound FX: ON':'🔇 Sound FX: OFF',()=>{sfxEnabled=!sfxEnabled;saveAudioPrefs();if(audioContext&&sfxBus)sfxBus.gain.setTargetAtTime(sfxEnabled?sfxVolume:0,audioContext.currentTime,.02);showSettings();}));
+ function addVolumeSlider(title,current,fn){
+   const lab=document.createElement('label');lab.textContent=title+' — '+Math.round(current*100)+'%';audio.appendChild(lab);
+   const range=document.createElement('input');range.type='range';range.min='0';range.max='100';range.step='1';range.value=Math.round(current*100);range.style.width='100%';
+   range.addEventListener('input',()=>{lab.textContent=title+' — '+range.value+'%';fn(range.value);});audio.appendChild(range);
+ }
+ addVolumeSlider('MUSIC VOLUME',musicVolume,setMusicVolume);
+ addVolumeSlider('SOUND EFFECTS VOLUME',sfxVolume,setSfxVolume);
+ const musicHint=document.createElement('p');musicHint.className='hint';musicHint.textContent='Cinematic score changes with each region and boss. Music continues softly with a muffled, distant sound during pause, upgrades, inventory and menus.';audio.appendChild(musicHint);
+ const binds=document.createElement('div');binds.className='settingsCard';binds.style.gridColumn='1 / -1';grid.appendChild(binds);
+ const bl=document.createElement('label');bl.textContent='KEYBOARD BINDINGS (click then press a key)';binds.appendChild(bl);
+ for(const action of REBINDABLE){const b=button(action.toUpperCase()+' : '+keyLabel(prefs.controls[action]),()=>{waitingForKey=action;b.textContent='PRESS A KEY FOR '+action.toUpperCase();});b.style.width='auto';binds.appendChild(b);}
+ panelButtons.appendChild(button('RESET DEFAULT CONTROLS',()=>{prefs.controls={...DEFAULT_PREFS.controls};savePrefs();showSettings();}));
+ panelButtons.appendChild(button('✔ CLOSE SETTINGS',closeSettings));
+}
+let settingsPrevious='title';
+function closeSettings(){waitingForKey=null;const prev=settingsPrevious;
+ if(prev==='playing'){state='playing';panel.style.display='none';keys={};mouse.down=false;lastFrame=0;}
+ else if(prev==='paused'){state='paused';openPanel('PAUSED','Game paused.');panelButtons.appendChild(button('RESUME',togglePauseRelease));panelButtons.appendChild(button('SETTINGS',showSettings));panelButtons.appendChild(button('WORLD MAP',showWorldMap));}
+ else if(prev==='title')showTitleScreen();else showWorldMap();
+}
+function togglePauseRelease(){
+ if(state==='playing'){state='paused';keys={};mouse.down=false;openPanel('PAUSED','Take a break.');panelButtons.appendChild(button('RESUME',togglePauseRelease));panelButtons.appendChild(button('SETTINGS',showSettings));panelButtons.appendChild(button('WORLD MAP',showWorldMap));}
+ else if(state==='paused'){state='playing';panel.style.display='none';keys={};mouse.down=false;lastFrame=0;}
+}
+document.getElementById('settingsButton').addEventListener('click',showSettings);
+document.getElementById('pauseButton').addEventListener('click',togglePauseRelease);
+// Touch controls: held directional input and fire; abilities activate once.
+let touchFiring=false;
+const mobilePad=document.getElementById('mobilePad');
+for(const btn of mobilePad.querySelectorAll('[data-touch]')){
+ const action=btn.dataset.touch;
+ btn.addEventListener('pointerdown',e=>{
+  e.preventDefault();if(state!=='playing')return;
+  if(action==='dash')dash();else if(action==='shield')shield();
+  else if(action==='fire')touchFiring=true;else keys[action]=true;
+  try{btn.setPointerCapture(e.pointerId);}catch(err){}
+ });
+ for(const event of ['pointerup','pointercancel','lostpointercapture'])btn.addEventListener(event,()=>{if(action==='fire')touchFiring=false;else if(!['dash','shield'].includes(action))keys[action]=false;});
+}
+function autoAimMobile(){
+ let target=null,dist=Infinity;
+ for(const e of enemies){if(e.hp<=0)continue;const d=Math.hypot(e.x-player.x,e.y-player.y);if(d<dist){target=e;dist=d;}}
+ if(boss&&boss.hp>0){const d=Math.hypot(boss.x-player.x,boss.y-player.y);if(d<dist)target=boss;}
+ if(target){mouse.x=target.x;mouse.y=target.y;}
+}
+
+// HELL MODE: isolated, no checkpoints and no permanent stat bonuses.
+function showHellHeroSelect(){
+ activeArena={...HELL_ARENA};state='menu';openPanel('💀 HELL GAUNTLET — ONE LIFE','Twelve waves. No checkpoints. Four single-purchase armories (after waves 2, 5, 8 and 10). No healing, allies, permanent bonuses or revives. Watch attack warnings.');
+ const grid=document.createElement('div');grid.className='heroGrid';panelButtons.appendChild(grid);
+ HEROES.forEach((h,i)=>{const card=document.createElement('div');card.className='heroCard';card.innerHTML='<div class="heroAvatar">'+h.icon+'</div><strong>'+h.name+'</strong><small>'+h.description+'</small>';card.appendChild(button('CHOOSE '+h.name,()=>startGame(i)));grid.appendChild(card);});
+ panelButtons.appendChild(button('← TITLE',showTitleScreen));
+}
+function showHellIntermission(){
+ autoCollectRemaining();
+ if(wave>=HELL_ARENA.goal){hellVictory();return;}
+ if(![2,5,8,10].includes(wave)){wave++;startWave();return;}
+ state='shop';keys={};mouse.down=false;
+ openPanel('☠ HELL ARMORY — WAVE '+wave,'No healing or checkpoints. Coins '+coins+' · One upgrade per armory visit. Pick carefully.');
+ let purchased=false;
+ const grid=document.createElement('div');grid.className='shopGrid';panelButtons.appendChild(grid);
+ weapons.forEach((w,i)=>{const card=document.createElement('div');card.className='shopCard';const c=w.owned?Math.ceil(30*w.level):55;card.innerHTML='<b>'+w.name+' · LV '+w.level+'</b><p>Damage '+w.damage+(i===3?' · splash area reduced in Hell':'')+'</p>';
+ card.appendChild(button(w.owned?'UPGRADE — '+c+' COINS':'UNLOCK — 55 COINS',()=>{if(purchased||coins<c)return;coins-=c;purchased=true;if(w.owned){w.level++;w.damage++;}else w.owned=true;showHellIntermissionPurchased();},purchased||coins<c||w.level>=3));grid.appendChild(card);});
+ panelButtons.appendChild(button('CONTINUE TO WAVE '+(wave+1),()=>{wave++;startWave();}));
+}
+function showHellIntermissionPurchased(){state='shop';openPanel('UPGRADE LOCKED IN','Only one purchase per armory. No more purchases until the next armory break.');panelButtons.appendChild(button('CONTINUE TO WAVE '+(wave+1),()=>{wave++;startWave();}));}
+function hellGameOver(){autoCollectRemaining('RUN ENDED');recordLeaderboard('Defeated');state='gameover';keys={};mouse.down=false;hellDeaths++;openPanel('☠ PERMADEATH — RUN LOST','Wave '+wave+'/'+HELL_ARENA.goal+' · '+kills+' kills · '+Math.floor(hellElapsed)+' seconds survived. No checkpoint: restart at Wave 1.');panelButtons.appendChild(button('RETRY FROM WAVE 1',showHellHeroSelect));panelButtons.appendChild(button('🏆 HELL LEADERBOARD',()=>showLeaderboard('hell',showTitleScreen)));panelButtons.appendChild(button('TITLE SCREEN',()=>{hellMode=false;showTitleScreen();}));}
+function hellVictory(){autoCollectRemaining('GAUNTLET CLEARED');recordLeaderboard('Conquered');state='menu';hellCleared=true;openPanel('🏆 HELL MODE CONQUERED','Twelve waves survived · '+kills+' kills · '+Math.floor(hellElapsed)+' seconds. No checkpoint, no revive.');panelButtons.appendChild(button('PLAY AGAIN',showHellHeroSelect));panelButtons.appendChild(button('🏆 HELL LEADERBOARD',()=>showLeaderboard('hell',showTitleScreen)));panelButtons.appendChild(button('TITLE SCREEN',()=>{hellMode=false;showTitleScreen();}));}
+// HELL hazards telegraph for 1.4 seconds. Each new pulse switches lanes or positions.
+// The safe gap is always wide enough for a walking player to reach after the warning.
+function makeHellHazards(){
+ const extra=Math.max(0,wave-4)*2;
+ return [
+  {shape:'lane',axis:'x',width:148,damage:26+extra,color:'#ff5369',period:7.2,activeFor:1.75,delay:3.0,warn:1.45,seed:wave*7+1},
+  {shape:'circle',r:88,damage:23+extra,color:'#ffac56',period:6.5,activeFor:1.8,delay:5.1,warn:1.45,seed:wave*11+3},
+  ...(wave>=4?[{shape:'lane',axis:'y',width:110,damage:26+extra,color:'#b784ff',period:9.1,activeFor:1.45,delay:7.5,warn:1.6,seed:wave*17+4}]:[])
+ ];
+}
+function addHellWarning(w){hellWarnings.push({...w,created:time});}
+function hellShot(x,y,a,speed=320,damage=15){if(enemyBullets.length>140)return;enemyBullets.push({x,y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:6,damage});}
+function updateHellWarnings(dt){
+ for(let i=hellWarnings.length-1;i>=0;i--){const w=hellWarnings[i];if(time<w.fireAt)continue;
+  if(w.type==='aim'||w.type==='dash'){if(w.type==='aim')hellShot(w.x,w.y,w.a,w.speed,17);else if(w.enemy&&w.enemy.hp>0){w.enemy.dashUntil=time+.31;w.enemy.dashVX=Math.cos(w.a);w.enemy.dashVY=Math.sin(w.a);}}
+  if(w.type==='fan'){for(let j=0;j<w.count;j++){const a=w.a+(j-(w.count-1)/2)*w.spread/(w.count-1);hellShot(w.x,w.y,a,w.speed,19);}}
+  if(w.type==='ring'){for(let j=0;j<w.count;j++){const a=j*2*Math.PI/w.count+w.a;hellShot(w.x,w.y,a,w.speed,16);}}
+  if(w.type==='lanes'){const slot=w.slot;for(let col=0;col<9;col++){if(col===slot||col===(slot+1)%9)continue; for(let j=0;j<4;j++)hellShot(col*100+45,80-j*55,Math.PI/2,390,18);}}
+  hellWarnings.splice(i,1);
+ }
+}
+function drawHellWarnings(){ctx.save();
+ for(const w of hellWarnings){const remaining=Math.max(0,w.fireAt-time),alpha=.28+.52*(1-remaining/1.4);ctx.strokeStyle='rgba(255,110,95,'+alpha+')';ctx.fillStyle='rgba(255,80,80,.09)';ctx.lineWidth=4;ctx.setLineDash([12,7]);
+ if(w.type==='ring'){ctx.beginPath();ctx.arc(w.x,w.y,90,0,2*Math.PI);ctx.stroke();}
+ else if(w.type==='lanes'){const slot=w.slot;for(let col=0;col<9;col++){if(col===slot||col===(slot+1)%9)continue;ctx.fillRect(col*100,77,90,H-77);}}
+ else{const a=w.a;ctx.beginPath();ctx.moveTo(w.x,w.y);ctx.lineTo(w.x+Math.cos(a)*950,w.y+Math.sin(a)*950);ctx.stroke();if(w.type==='fan'){ctx.beginPath();ctx.moveTo(w.x,w.y);ctx.arc(w.x,w.y,130,a-w.spread/2,a+w.spread/2);ctx.closePath();ctx.stroke();}}
+ ctx.setLineDash([]);ctx.font='bold 13px Arial';ctx.fillStyle='#ffbdb3';ctx.fillText('ATTACK '+remaining.toFixed(1)+'s',Math.min(W-130,Math.max(0,w.x)),Math.max(93,w.y-25));}
+ ctx.restore();}
+
+// V25 soundtrack player: does not modify save data or mission unlocks.
+function showSoundtrackPlayer(){
+ state='menu';keys={};mouse.down=false;
+ if(jukeboxMode===null)jukeboxMode='meadow';
+ if(!musicEnabled){musicEnabled=true;saveAudioPrefs();}
+ ensureAudio();startMusic();
+ openPanel('🎵 BATTLE ARENA SOUNDTRACKS','Preview every regional theme and Boss arrangement — no mission progress required. Your saved campaign is not changed.');
+ const note=document.createElement('p');note.className='hint';note.textContent='Press a track to play it. Original music generated by the game, not copyrighted commercial tracks.';panelButtons.appendChild(note);
+ const modes=[
+ ['🌿 Dawn of Hope — Verdant Outpost','meadow'],['⚔ Dawn of Hope — Boss','meadow_boss'],
+ ['❄ Crystal Siege — Frozen Citadel','frost'],['⚔ Crystal Siege — Boss','frost_boss'],
+ ['⚙ Steel Uprising — Iron Wastes','scrap'],['⚔ Steel Uprising — Boss','scrap_boss'],
+ ['🌋 Ashen March — Ember Fortress','ember'],['⚔ Ashen March — Boss','ember_boss'],
+ ['👑 The Last Oath — Crown Citadel','throne'],['⚔ The Last Oath — Boss','throne_boss'],
+ ['🔥 The Shattered King — FINAL BATTLE','finale'],['💀 No Mercy — HELL Gauntlet','hell']
+ ];
+ const grid=document.createElement('div');grid.className='settingsGrid';panelButtons.appendChild(grid);
+ for(const [label,mode] of modes){
+  const b=button((jukeboxMode===mode?'▶ NOW PLAYING  ':'▶ ')+label,()=>{
+    jukeboxMode=mode;
+    if(audioContext){musicMode='';musicNextTime=audioContext.currentTime+.06;}
+    showSoundtrackPlayer();
+  });
+  if(jukeboxMode===mode)b.classList.add('active');grid.appendChild(b);
+ }
+ const vol=document.createElement('div');vol.className='settingBar';
+ const label=document.createElement('label');label.textContent='Music volume ';label.style.marginRight='12px';
+ const slider=document.createElement('input');slider.type='range';slider.min='0';slider.max='100';slider.value=String(Math.round(musicVolume*100));
+ slider.addEventListener('input',()=>setMusicVolume(slider.value));label.appendChild(slider);vol.appendChild(label);panelButtons.appendChild(vol);
+ panelButtons.appendChild(button(musicAirOn?'✨ MUSIC POLISH ON · SWITCH TO ORIGINAL':'🎵 ORIGINAL MIX · SWITCH TO POLISHED',()=>{toggleMusicPolish();showSoundtrackPlayer();}));
+ panelButtons.appendChild(button('⏹ STOP & RETURN TO TITLE',()=>{jukeboxMode=null;if(musicTicker){clearInterval(musicTicker);musicTicker=null;}if(audioContext&&musicBus)musicBus.gain.setTargetAtTime(0,audioContext.currentTime,.04);showTitleScreen();}));
+}
+function showTitleScreen(){
+ state='title';keys={};mouse.down=false;touchFiring=false;
+ openPanel('⚔️ BATTLE ARENA V18 · LEADERBOARDS','Multi-stage mystery bosses (3–4 health bars), warned attacks, longer boss music, and all V9 features.');
+ const splash=document.createElement('div');splash.className='titleSplash';
+ splash.innerHTML='<div class="crown">👑</div><h3>THE CROWN CHAMPIONS</h3><p>Fight through five regions. Forge relationships. Rewrite the fate of the realm.<br>Now every boss survives multiple evolving phases. Listen to the original battle and boss themes for longer.</p>';
+ panelButtons.appendChild(splash);
+ const choices=document.createElement('div');choices.className='settingBar';panelButtons.appendChild(choices);
+ for(const mode of ['easy','normal','hard','hell']){
+  const b=button(mode.toUpperCase(),()=>setDifficulty(mode));
+  if(difficulty===mode)b.classList.add('active');choices.appendChild(b);
+ }
+ panelButtons.appendChild(button(musicEnabled?'🎵 MUSIC ON':'🎵 MUSIC OFF',toggleMusic));
+ panelButtons.appendChild(button(sfxEnabled?'🔊 SFX ON':'🔇 SFX OFF',toggleSfx));
+ panelButtons.appendChild(document.createElement('br'));
+ panelButtons.appendChild(button('⚙ SETTINGS',showSettings));
+ panelButtons.appendChild(button('🏆 LEADERBOARDS',()=>showLeaderboard('campaign',showTitleScreen)));
+ panelButtons.appendChild(button('🎵 LISTEN TO ALL SOUNDTRACKS',showSoundtrackPlayer));
+ panelButtons.appendChild(button('▶ ENTER THE CAMPAIGN',()=>{hellMode=false;ensureAudio();if(musicEnabled)startMusic();showWorldMap();}));
+ panelButtons.appendChild(button('💀 START HELL GAUNTLET — ONE LIFE',()=>{hellMode=true;difficulty='hell';activeArena={...HELL_ARENA};battleBonus={hp:0,damage:0,enemySpeed:1,extraCoins:0};hellWarnings=[];hellElapsed=0;ensureAudio();showHellHeroSelect();}));
+ const help=document.createElement('p');help.className='hint';help.textContent='Easy: -28% enemy HP  ·  Normal: Classic  ·  Hard: +48% enemy HP, faster enemies, +50% mission Gems';panelButtons.appendChild(help);
+}
+
+
+// LESSON 7: World-map missions, profile and quests
+const ARENAS=[
+ {id:'meadow',icon:'🌿',name:'Verdant Outpost',subtitle:'ACT I · The signal',goal:6,reward:70,enemySpeed:1,enemyHp:1,spawnBonus:0,bg:'#172d3d',grid:'#315766',bossEvery:5,faction:'wild',hazard:'brambles',requires:[]},
+ {id:'frost',icon:'❄️',name:'Frozen Citadel',subtitle:'ACT II · The northern path · Frost Legion',goal:8,reward:105,enemySpeed:1.15,enemyHp:1.3,spawnBonus:1,bg:'#183448',grid:'#416e89',bossEvery:3,faction:'frost',hazard:'ice',requires:['meadow'],path:'north'},
+ {id:'scrap',icon:'⚙️',name:'Iron Wastes',subtitle:'ACT II · The southern path · Iron Syndicate',goal:8,reward:105,enemySpeed:1.3,enemyHp:1.12,spawnBonus:2,bg:'#302b30',grid:'#71604b',bossEvery:3,faction:'iron',hazard:'electric',requires:['meadow'],path:'south'},
+ {id:'ember',icon:'🌋',name:'Ember Fortress',subtitle:'ACT III · Siege of flames · Ashborn',goal:10,reward:160,enemySpeed:1.35,enemyHp:1.45,spawnBonus:2,bg:'#372336',grid:'#6b4050',bossEvery:4,faction:'ash',hazard:'lava',requires:['frost','scrap']},
+ {id:'throne',icon:'👑',name:'Crown Citadel',subtitle:'FINAL ACT · The Shattered King',goal:12,reward:340,enemySpeed:1.5,enemyHp:1.7,spawnBonus:3,bg:'#291e42',grid:'#6a517f',bossEvery:4,faction:'crown',hazard:'void',requires:['ember'],final:true}
+];
+const NPCS={
+ meadow:{speaker:'Captain Mira',intro:'The Crown is broken. Two factions hold the keys to the Citadel. Will you help us?',a:'I will protect the people.',b:'I want to learn the truth.'},
+ frost:{speaker:'Warden Ilya',intro:'The Frost Legion guards the northern key. Will you follow the safe pass or strike head-on?',a:'Take the safe pass.',b:'Charge the fortress.'},
+ scrap:{speaker:'Mechanic Taro',intro:'The Iron Syndicate built these war machines. We can sabotage them or bargain for supplies.',a:'Sabotage their engines.',b:'Trade for supplies.'},
+ ember:{speaker:'Scout Nyra',intro:'The Ashborn march on the final gate. Which priority matters?',a:'Save the refugees.',b:'Secure the gate.'},
+ throne:{speaker:'The Shattered King',intro:'You found me at last. Every choice led to this battle. Will you free the realm or seize its power?',a:'Free the realm.',b:'Claim the crown.'}
+};
+const QUESTS=[
+ {id:'kill10',title:'First Patrol',desc:'Defeat 10 enemies (lifetime)',type:'kills',goal:10,reward:20},
+ {id:'kill50',title:'Arena Hunter',desc:'Defeat 50 enemies (lifetime)',type:'kills',goal:50,reward:55},
+ {id:'boss1',title:'First Boss',desc:'Defeat 1 boss',type:'bosses',goal:1,reward:40},
+ {id:'mission2',title:'World Explorer',desc:'Complete 2 missions',type:'missions',goal:2,reward:50},
+ {id:'mission5',title:'Champion',desc:'Complete 5 missions',type:'missions',goal:5,reward:100}
+];
+let activeArena=ARENAS[0],missionComplete=false;
+// Your decisions have gameplay effects, not just different text.
+function choiceAt(id){return meta.storyChoices[id]?.choice||null;}
+function relationshipName(id){return ({meadow:'mira',frost:'ilya',scrap:'taro',ember:'nyra'})[id];}
+function campaignEnding(){
+ const crown=choiceAt('throne');
+ const friendship=Object.values(meta.relationships||{}).reduce((a,b)=>a+Number(b||0),0);
+ if(crown==='b')return 'CROWN ASCENDANT — You rule with the Crown.';
+ if(friendship>=5)return 'UNITED REALM — Your friends rebuild the kingdom together.';
+ return 'LONE LIBERATOR — The realm is free, but its future is uncertain.';
+}
+function decisionEffects(){
+ const c=choiceAt(activeArena.id);
+ battleBonus={hp:0,damage:0,enemySpeed:1,extraCoins:0};
+ if(activeArena.id==='meadow') {if(c==='a')battleBonus.hp=25;else battleBonus.damage=1;}
+ if(activeArena.id==='frost') {if(c==='a')battleBonus.enemySpeed=.8;else battleBonus.damage=2;}
+ if(activeArena.id==='scrap') {if(c==='a')battleBonus.enemySpeed=.78;else battleBonus.extraCoins=4;}
+ if(activeArena.id==='ember') {if(c==='a')battleBonus.hp=35;else battleBonus.damage=3;}
+ if(activeArena.id==='throne') {if(c==='a')battleBonus.hp=45;else battleBonus.damage=4;}
+}
+// V17: selectable, persistent companion roster. Only previously rescued allies are selectable.
+const ALLY_ROSTER=[
+ {id:'mira',name:'Captain Mira',color:'#70c9ff',arena:'meadow',style:'Guardian • steady shots',damageBonus:0,shotDelay:1.0,range:480,bulletSpeed:470},
+ {id:'ilya',name:'Warden Ilya',color:'#b8ebff',arena:'frost',style:'Marksman • longer reach',damageBonus:1,shotDelay:1.35,range:610,bulletSpeed:560},
+ {id:'taro',name:'Mechanic Taro',color:'#ffd477',arena:'scrap',style:'Engineer • rapid fire',damageBonus:0,shotDelay:.73,range:425,bulletSpeed:475},
+ {id:'nyra',name:'Scout Nyra',color:'#ff9b81',arena:'ember',style:'Scout • fast precise fire',damageBonus:0,shotDelay:.82,range:515,bulletSpeed:580}
+];
+function unlockedAllies(){return ALLY_ROSTER.filter(a=>meta.completedArenas.includes(a.arena));}
+function chooseAlly(){
+ const available=unlockedAllies();
+ if(!available.length||meta.selectedAlly==='none')return null;
+ let picked=available.find(a=>a.id===meta.selectedAlly);
+ if(!picked){picked=available.slice().sort((a,b)=>(meta.relationships[b.id]||0)-(meta.relationships[a.id]||0))[0];}
+ return {...picked,x:player.x-45,y:player.y+35,r:14,nextShot:0,friendship:meta.relationships[picked.id]||0};
+}
+function showAllySelection(){
+ state='menu';openPanel('🛡️ CHOOSE YOUR ALLY','Choose one unlocked companion for your next campaign mission. This selection is saved. HELL Gauntlet remains solo.');
+ const grid=document.createElement('div');grid.className='shopGrid';panelButtons.appendChild(grid);
+ const options=[{id:'auto',name:'AUTO',style:'Choose the unlocked ally with highest friendship',color:'#9cb1ce'},...ALLY_ROSTER,{id:'none',name:'NO ALLY',style:'Fight alone as a personal challenge',color:'#aeb9c8'}];
+ for(const candidate of options){
+  const unlocked=!candidate.arena||meta.completedArenas.includes(candidate.arena);
+  const selected=(meta.selectedAlly||'auto')===candidate.id;
+  const card=document.createElement('div');card.className='shopCard';
+  const heading=document.createElement('strong');heading.textContent=(selected?'✓ ':'')+candidate.name;
+  heading.style.color=candidate.color;
+  const info=document.createElement('p');info.textContent=candidate.style+(candidate.arena?' · Friendship '+(meta.relationships[candidate.id]||0)+'/5':'');
+  card.append(heading,info);
+  card.appendChild(button(selected?'SELECTED':unlocked?'SELECT ALLY':'🔒 COMPLETE THEIR MISSION',()=>{meta.selectedAlly=candidate.id;saveMeta();showAllySelection();},!unlocked||selected));
+  grid.appendChild(card);
+ }
+ panelButtons.appendChild(button('← WORLD MAP',showWorldMap));
+ panelButtons.appendChild(button('RELATIONSHIPS',showRelationships));
+}
+function profileName(){return String(meta.profileName||'Adventurer').slice(0,22);}
+function changeName(){
+ const name=prompt('Choose a player nickname (up to 22 characters):',profileName());
+ if(name===null)return;
+ const clean=name.trim().replace(/[<>]/g,'').slice(0,22);
+ if(!clean){alert('Please enter a nickname.');return;}
+ meta.profileName=clean;saveMeta();showProfile();
+}
+function showProfile(){
+ state='menu';openPanel('👤 PLAYER PROFILE',`Player: ${profileName()} · Gems ${meta.gems} · Runs ${meta.runs} · Total kills ${meta.totalKills} · Best wave ${meta.bestWave}`);
+ panelButtons.appendChild(button('EDIT NICKNAME',changeName));
+ panelButtons.appendChild(button('🏆 MY LEADERBOARD',()=>showLeaderboard('campaign',showProfile)));
+ panelButtons.appendChild(button('🛡️ CHOOSE ALLY',showAllySelection));
+ panelButtons.appendChild(button('WORLD MAP',showWorldMap));
+ panelButtons.appendChild(button('QUEST LOG',showQuests));
+ panelButtons.appendChild(button('RELATIONSHIPS',showRelationships));
+ panelButtons.appendChild(button('CHOOSE ALLY',showAllySelection));
+ panelButtons.appendChild(button('HERO BASE',showMetaShop));
+ const summary=document.createElement('div');summary.className='shopGrid';panelButtons.appendChild(summary);
+ for(const arena of ARENAS){const el=document.createElement('div');el.className='shopCard';el.textContent=arena.icon+' '+arena.name+' — '+(meta.completedArenas.includes(arena.id)?'✅ COMPLETED':'Not completed');summary.appendChild(el);}
+}
+function arenaUnlocked(index){const a=ARENAS[index];return a.requires.length===0 || a.requires.some(id=>meta.completedArenas.includes(id));}
+// Lesson 9: illustrated NPCs, connected map and animated story scenes.
+function clearCinematicTimers(){if(dialogueTimer!==null){clearInterval(dialogueTimer);dialogueTimer=null;}if(sceneTimer!==null){clearInterval(sceneTimer);sceneTimer=null;}}
+function portraitSVG(id){
+ const colors={meadow:['#78c9f3','#304963'],frost:['#a3e4ff','#5e86b9'],scrap:['#f0b37d','#866045'],ember:['#f58c84','#6f3b5a'],throne:['#d7b0ed','#6e467d']};
+ const [skin,hair]=colors[id]||colors.meadow;
+ return `<svg viewBox="0 0 120 140" role="img" aria-label="Character portrait"><rect width="120" height="140" rx="12" fill="#14263b"/><circle cx="60" cy="62" r="37" fill="${hair}"/><path d="M15 140 Q17 99 60 102 Q103 99 105 140Z" fill="${hair}"/><ellipse cx="60" cy="67" rx="29" ry="35" fill="${skin}"/><path d="M30 55 Q24 18 60 22 Q96 18 90 55 L80 43 L44 43Z" fill="${hair}"/><ellipse cx="50" cy="68" rx="4" ry="5" fill="#19283a"/><ellipse cx="71" cy="68" rx="4" ry="5" fill="#19283a"/><path d="M50 84 Q60 91 71 84" fill="none" stroke="#68424b" stroke-width="3" stroke-linecap="round"/><path d="M41 113 L60 129 L79 113" fill="none" stroke="#e5f2ff" stroke-width="4"/></svg>`;
+}
+function typeInto(element,text,onDone){
+ clearCinematicTimers();let index=0;const cursor=document.createElement('span');cursor.className='typeCursor';cursor.textContent='▌';element.textContent='';element.appendChild(cursor);
+ function finish(){if(dialogueTimer!==null){clearInterval(dialogueTimer);dialogueTimer=null;}element.textContent=text;onDone?.();}
+ dialogueTimer=setInterval(()=>{index=Math.min(text.length,index+2);element.textContent=text.slice(0,index);element.appendChild(cursor);if(index===text.length)finish();},32);
+ return finish;
+}
+const MAP_COORDS={meadow:[290,58],frost:[135,170],scrap:[445,170],ember:[290,278],throne:[290,390]};
+function visualMap(){
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 580 450');svg.setAttribute('class','campaignPaths');svg.setAttribute('role','group');svg.setAttribute('aria-label','Campaign mission map with connected paths');
+ const ns='http://www.w3.org/2000/svg';const make=(tag,attrs)=>{const el=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));return el;};
+ const edges=[['meadow','frost'],['meadow','scrap'],['frost','ember'],['scrap','ember'],['ember','throne']];
+ for(const [a,b] of edges){const [x1,y1]=MAP_COORDS[a],[x2,y2]=MAP_COORDS[b];const path=make('path',{d:`M ${x1} ${y1} Q ${(x1+x2)/2} ${(y1+y2)/2-20} ${x2} ${y2}`,class:'routeLine'+(meta.completedArenas.includes(a)?' cleared':'')});svg.appendChild(path);}
+ ARENAS.forEach((arena,i)=>{const [x,y]=MAP_COORDS[arena.id],unlocked=arenaUnlocked(i),done=meta.completedArenas.includes(arena.id);const node=make('g',{class:'mapNode'+(unlocked?'':' locked')+(done?' done':''),transform:`translate(${x},${y})`,tabindex:unlocked?'0':'-1',role:'button','aria-label':`${arena.name}, ${done?'completed':unlocked?'unlocked':'locked'}`});
+ const box=make('rect',{x:-85,y:-34,width:170,height:68,rx:13,fill:unlocked?'#2e526d':'#304050',class:'nodeOuter'});node.appendChild(box);
+ const icon=make('text',{x:0,y:-6,'text-anchor':'middle',class:'mapIcon'});icon.textContent=arena.icon;node.appendChild(icon);
+ const label=make('text',{x:0,y:14,'text-anchor':'middle'});label.textContent=arena.name;node.appendChild(label);
+ const mark=make('text',{x:0,y:28,'text-anchor':'middle'});mark.textContent=done?'✓ COMPLETE':unlocked?'● AVAILABLE':'🔒 LOCKED';node.appendChild(mark);
+ if(unlocked){node.addEventListener('click',()=>showDialogue(arena));node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showDialogue(arena);}});}svg.appendChild(node);
+ });return svg;
+}
+function playCutscene(arena,phase,then){
+ clearCinematicTimers();state='menu';const scenes={
+ meadow:{intro:['🌿','The first signal rises over Verdant Outpost. The kingdom calls for a defender.'],outro:['✨','The Outpost is safe. Two roads lead deeper into the broken kingdom.']},
+ frost:{intro:['❄️','The northern citadel watches your approach. The Frost Legion prepares its defenses.'],outro:['🗝️','The northern key is yours. An ancient gate begins to stir.']},
+ scrap:{intro:['⚙️','Across the Iron Wastes, engines awaken beneath an orange sky.'],outro:['🗝️','The machines fall silent. Their secret path leads to Ember Fortress.']},
+ ember:{intro:['🌋','Ash falls on the last fortress before the throne. The final siege begins.'],outro:['🔥','The fortress falls. The Shattered King waits beyond the gate.']},
+ throne:{intro:['👑','The throne room opens. The King demands one last answer.'],phase:['⚡','THE KING AWAKENS! His Crown shatters into a storm of energy. The second phase begins!'],outro:['🏆','The Crown is decided. The realm will remember your choice.']}
+ };const [symbol,text]=scenes[arena.id][phase];openPanel(phase==='intro'?'🎬 CHAPTER INTRO':'🎬 CHAPTER COMPLETE','A story cutscene.');
+ const card=document.createElement('div');card.className='cutsceneFrame';const visual=document.createElement('div');visual.className='cutsceneVisual';visual.textContent=symbol;const line=document.createElement('p');card.append(visual,line);panelButtons.appendChild(card);
+ const next=button('SKIP / CONTINUE →',()=>{clearCinematicTimers();then();});panelButtons.appendChild(next);
+ typeInto(line,text,()=>{next.textContent='CONTINUE →';});
+}
+function showRelationships(){
+ state='menu';openPanel('🤝 ALLY RELATIONSHIPS','Friendly NPCs join your missions after you complete their chapter. Higher friendship makes their attacks stronger.');
+ const cards=document.createElement('div');cards.className='shopGrid';panelButtons.appendChild(cards);
+ for(const [id,name] of [['mira','Captain Mira'],['ilya','Warden Ilya'],['taro','Mechanic Taro'],['nyra','Scout Nyra']]){
+  const card=document.createElement('div');card.className='shopCard';
+  const rank=meta.relationships[id]||0;
+  card.textContent=name+' — Friendship '+rank+' / 5'+(rank>=3?' ⭐ TRUSTED':'');cards.appendChild(card);
+ }
+ panelButtons.appendChild(button('CHOOSE ALLY',showAllySelection));
+ panelButtons.appendChild(button('WORLD MAP',showWorldMap));
+}
+function showWorldMap(){
+ clearCinematicTimers();state='menu';openPanel('🗺️ SHATTERED CROWN — WORLD MAP','Select a connected mission. Green routes show completed chapters.');
+ panelButtons.appendChild(visualMap());
+ panelButtons.appendChild(button('QUEST LOG',showQuests));panelButtons.appendChild(button('PLAYER PROFILE',showProfile));panelButtons.appendChild(button('HERO BASE',showMetaShop));panelButtons.appendChild(button('STORY JOURNAL',showJournal));panelButtons.appendChild(button('RELATIONSHIPS',showRelationships));panelButtons.appendChild(button('🛡️ CHOOSE ALLY',showAllySelection));
+ panelButtons.appendChild(button('🏆 LEADERBOARDS',()=>showLeaderboard('campaign',showWorldMap)));
+}
+function showDialogue(arena){
+ clearCinematicTimers();activeArena=arena;state='menu';const npc=NPCS[arena.id];
+ openPanel('💬 '+npc.speaker,'Your choice affects combat bonuses, friendship, and the ending.');
+ const scene=document.createElement('div');scene.className='npcScene';scene.innerHTML=portraitSVG(arena.id);
+ const content=document.createElement('div');const name=document.createElement('strong');name.textContent=npc.speaker;const line=document.createElement('p');content.append(name,line);scene.appendChild(content);panelButtons.appendChild(scene);
+ const controls=document.createElement('div');panelButtons.appendChild(controls);
+ const previous=meta.storyChoices[arena.id];
+ const displayChoices=()=>{
+  controls.replaceChildren();
+  if(previous){const p=document.createElement('p');p.textContent='Your previous decision: '+previous.text;controls.appendChild(p);controls.appendChild(button('CONTINUE STORY →',()=>playCutscene(arena,'intro',showHeroSelect)));}
+  else{for(const [choice,text] of [['a',npc.a],['b',npc.b]])controls.appendChild(button(text,()=>{clearCinematicTimers();meta.storyChoices[arena.id]={choice,text};const friend=relationshipName(arena.id);if(friend)meta.relationships[friend]=Math.min(5,(meta.relationships[friend]||0)+(choice==='a'?2:1));saveMeta();playCutscene(arena,'intro',showHeroSelect);}));}
+  controls.appendChild(button('← WORLD MAP',showWorldMap));
+ };
+ const finish=typeInto(line,npc.intro,displayChoices);
+ panelButtons.appendChild(button('SKIP TEXT',finish));
+}
+function showJournal(){
+ state='menu';openPanel('📖 CAMPAIGN JOURNAL','Your NPC decisions and completed missions are saved between visits.');
+ for(const a of ARENAS){
+  const p=document.createElement('div');p.className='shopCard';p.style.margin='7px 0';
+  const decision=meta.storyChoices[a.id];
+  p.textContent=a.icon+' '+a.name+' — '+(meta.completedArenas.includes(a.id)?'✅ CLEARED':'Not cleared')+' · '+(decision?decision.text:'No decision yet');
+  panelButtons.appendChild(p);
+ }
+ if(meta.storyEnding){const ending=document.createElement('h3');ending.textContent='🏆 Campaign finished: '+(meta.endingType||campaignEnding());panelButtons.appendChild(ending);}
+ panelButtons.appendChild(button('WORLD MAP',showWorldMap));
+}
+function showQuests(){
+ state='menu';openPanel('📜 QUEST LOG','Your quest progress is saved permanently. Claim rewards when objectives are reached.');
+ for(const q of QUESTS){
+  const value=meta.questCounts[q.type]||0,claimed=meta.claimedQuests.includes(q.id),ready=value>=q.goal;
+  const card=document.createElement('div');card.className='shopCard';card.style.margin='8px 0';
+  const h=document.createElement('b');h.textContent=q.title+' — '+Math.min(value,q.goal)+'/'+q.goal;card.appendChild(h);
+  const detail=document.createElement('p');detail.textContent=q.desc+' · Reward: '+q.reward+' gems';card.appendChild(detail);
+  card.appendChild(button(claimed?'✅ CLAIMED':ready?'CLAIM '+q.reward+' GEMS':'IN PROGRESS',()=>{
+   if(meta.claimedQuests.includes(q.id)||(meta.questCounts[q.type]||0)<q.goal)return;
+   meta.claimedQuests.push(q.id);meta.gems+=q.reward;saveMeta();showQuests();
+  },claimed||!ready));panelButtons.appendChild(card);
+ }
+ panelButtons.appendChild(button('WORLD MAP',showWorldMap));
+ panelButtons.appendChild(button('PLAYER PROFILE',showProfile));
+}
+function finishMission(){
+ if(missionComplete)return;missionComplete=true;recordLeaderboard('Victory');
+ const first=!meta.completedArenas.includes(activeArena.id);
+ if(first)meta.completedArenas.push(activeArena.id);
+ if(activeArena.final){meta.storyEnding=true;meta.endingType=campaignEnding();}
+ const friend=relationshipName(activeArena.id);if(first&&friend)meta.relationships[friend]=Math.min(5,(meta.relationships[friend]||0)+1);
+ meta.questCounts.missions=(meta.questCounts.missions||0)+1;
+ const missionGems=Math.round(activeArena.reward*DIFFICULTY[difficulty].reward);
+ meta.gems+=missionGems;saveMeta();
+ state='menu';keys={};mouse.down=false;
+ playCutscene(activeArena,'outro',()=>{
+  openPanel(activeArena.final?'👑 CAMPAIGN COMPLETE!':'🏆 MISSION COMPLETE!',`${activeArena.name} cleared! +${missionGems} Gems · Score ${score} · Kills ${kills}`+(activeArena.final?' · '+meta.endingType:''));
+  panelButtons.appendChild(button('WORLD MAP',showWorldMap));panelButtons.appendChild(button('🏆 LEADERBOARD',()=>showLeaderboard('campaign',showWorldMap)));panelButtons.appendChild(button('QUEST LOG',showQuests));panelButtons.appendChild(button('STORY JOURNAL',showJournal));panelButtons.appendChild(button('HERO BASE',showMetaShop));
+ });
+}
+
+const RARITIES=[
+ {name:'Common',color:'#c6d5e5',mult:1},
+ {name:'Rare',color:'#68b8ff',mult:2},
+ {name:'Epic',color:'#c48bff',mult:3},
+ {name:'Legendary',color:'#ffcd65',mult:5}
+];
+const GEAR_TYPES={weapon:'⚔️ Weapon',armor:'🛡️ Armor',charm:'✨ Charm'};
+const ACHIEVEMENTS=[
+ {id:'first',title:'First Blood',desc:'Defeat 1 enemy',check:m=>m.totalKills>=1},
+ {id:'hunter',title:'Monster Hunter',desc:'Defeat 30 enemies',check:m=>m.totalKills>=30},
+ {id:'survivor',title:'Survivor',desc:'Reach Wave 5',check:m=>m.bestWave>=5},
+ {id:'boss',title:'Boss Breaker',desc:'Defeat a boss',check:m=>(m.bossKills||0)>=1},
+ {id:'collector',title:'Collector',desc:'Find 5 pieces of gear',check:m=>(m.totalLoot||0)>=5},
+ {id:'veteran',title:'Veteran',desc:'Start 5 runs',check:m=>m.runs>=5}
+];
+function loadSave(){
+ try{
+  const raw=JSON.parse(localStorage.getItem(SAVE_KEY)||localStorage.getItem('battleArenaHellSave_v1')||localStorage.getItem('battleArenaLesson11Save_v1')||localStorage.getItem('battleArenaLesson10Save_v1')||localStorage.getItem('battleArenaLesson9Save_v1')||localStorage.getItem('battleArenaLesson8Save_v1')||localStorage.getItem('battleArenaLesson7Save_v1')||localStorage.getItem('battleArenaLesson6Save_v1')||'null');
+  if(!raw||typeof raw!=='object')return DEFAULT_SAVE();
+  const d=DEFAULT_SAVE();return {...d,...raw,upgrades:{...d.upgrades,...raw.upgrades},weaponLevels:{...d.weaponLevels,...(raw.weaponLevels||{})},ionUnlocked:!!raw.ionUnlocked,equipped:{...d.equipped,...raw.equipped},equipment:Array.isArray(raw.equipment)?raw.equipment.slice(0,60):[],achievements:Array.isArray(raw.achievements)?raw.achievements:[],questCounts:{...d.questCounts,...raw.questCounts},claimedQuests:Array.isArray(raw.claimedQuests)?raw.claimedQuests:[],completedArenas:Array.isArray(raw.completedArenas)?raw.completedArenas:[],storyChoices:raw.storyChoices&&typeof raw.storyChoices==='object'?raw.storyChoices:{},relationships:{...d.relationships,...raw.relationships},selectedAlly:typeof raw.selectedAlly==='string'&&['auto','none','mira','ilya','taro','nyra'].includes(raw.selectedAlly)?raw.selectedAlly:'auto',endingType:raw.endingType||null,storyEnding:!!raw.storyEnding};
+ }catch(e){return DEFAULT_SAVE();}
+}
+function saveMeta(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(meta));}catch(e){say('Save unavailable in this browser; progress may not persist.');}}
+function achievementCheck(){
+ let earned=[];
+ for(const a of ACHIEVEMENTS){if(!meta.achievements.includes(a.id)&&a.check(meta)){
+  meta.achievements.push(a.id);meta.gems+=10;earned.push(a.title);
+ }}
+ if(earned.length)say('ACHIEVEMENT: '+earned.join(', ')+' (+10 gems each)');
+ saveMeta();
+}
+function gearBonus(type){const id=meta.equipped[type];const item=meta.equipment.find(g=>g.id===id);return item?item.bonus:0;}
+function passiveDamage(){return hellMode?0:meta.upgrades.damage+gearBonus('weapon');}
+function effectiveDefense(){return hellMode?0:gearBonus('armor');}
+function persistWave(){meta.bestWave=Math.max(meta.bestWave,wave);achievementCheck();}
+function makeLoot(forceRare=false){
+ const r=Math.random();let tier=forceRare?Math.max(1,r<.12?3:r<.45?2:1):(r<.60?0:r<.88?1:r<.98?2:3);
+ const type=['weapon','armor','charm'][Math.floor(Math.random()*3)];
+ const bonus=RARITIES[tier].mult;const id=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);
+ return {id,type,tier,bonus,name:RARITIES[tier].name+' '+({weapon:'Blade Module',armor:'Shield Plate',charm:'Fortune Charm'})[type]};
+}
+function grantLoot(forceRare=false){
+ if(meta.equipment.length>=60){meta.gems+=5;say('Gear bag full: converted loot into 5 gems');saveMeta();return;}
+ const item=makeLoot(forceRare);meta.equipment.push(item);meta.totalLoot=(meta.totalLoot||0)+1;runLootCount++;
+ say('LOOT: '+item.name+'! Press E to equip.');achievementCheck();
+}
+function equipGear(id){const item=meta.equipment.find(g=>g.id===id);if(!item)return;
+ meta.equipped[item.type]=id;saveMeta();showEquipment();
+}
+function salvageGear(id){const item=meta.equipment.find(g=>g.id===id);if(!item)return;
+ meta.equipment=meta.equipment.filter(g=>g.id!==id);
+ if(meta.equipped[item.type]===id)meta.equipped[item.type]=null;
+ meta.gems+=3+item.tier*4;saveMeta();showEquipment();
+}
+function showEquipment(){
+ if(state==='playing'){if(!openOverlay('⚔️ EQUIPMENT','Gear persists between runs.'))return;}
+ else if(state!=='inventory')return;
+ panelTitle.textContent='⚔️ EQUIPMENT';panelDesc.textContent='Permanent gear — '+meta.equipment.length+'/60 items · Gems: '+meta.gems;
+ panelButtons.replaceChildren();const grid=document.createElement('div');grid.className='shopGrid';panelButtons.appendChild(grid);
+ for(const type of ['weapon','armor','charm']){
+  const card=document.createElement('div');card.className='shopCard';
+  const h=document.createElement('b');h.textContent=GEAR_TYPES[type];card.appendChild(h);
+  const chosen=meta.equipment.find(g=>g.id===meta.equipped[type]);
+  const text=document.createElement('p');text.textContent='Equipped: '+(chosen?chosen.name+' (+'+chosen.bonus+')':'None');card.appendChild(text);
+  for(const item of meta.equipment.filter(g=>g.type===type)){
+   const line=document.createElement('div');line.style.cssText='border-top:1px solid #3e5774;padding:7px 0;';
+   const name=document.createElement('div');name.textContent=item.name+' · +'+item.bonus;name.style.color=RARITIES[item.tier].color;line.appendChild(name);
+   line.appendChild(button(meta.equipped[type]===item.id?'EQUIPPED':'EQUIP',()=>equipGear(item.id),meta.equipped[type]===item.id));
+   line.appendChild(button('SALVAGE',()=>salvageGear(item.id)));card.appendChild(line);
+  }grid.appendChild(card);
+ }
+ panelButtons.appendChild(button('RESUME GAME',resumeOverlay));
+}
+function showAchievements(){
+ if(state==='playing'){if(!openOverlay('🏆 ACHIEVEMENTS','Earn achievements and permanent gems.'))return;}
+ else if(state!=='inventory')return;
+ panelTitle.textContent='🏆 ACHIEVEMENTS';panelDesc.textContent='Unlocked '+meta.achievements.length+'/'+ACHIEVEMENTS.length;
+ panelButtons.replaceChildren();
+ for(const a of ACHIEVEMENTS){const row=document.createElement('div');row.className='inventoryRow';row.textContent=(meta.achievements.includes(a.id)?'✅ ':'🔒 ')+a.title+' — '+a.desc;panelButtons.appendChild(row);}
+ panelButtons.appendChild(button('RESUME GAME',resumeOverlay));
+}
+function showMetaShop(){
+ state='menu';keys={};mouse.down=false;
+ openPanel('🏠 HERO BASE','Permanent upgrades, equipment, achievements and save data. Gems: '+meta.gems+' · Runs: '+meta.runs+' · Best wave: '+meta.bestWave);
+ const grid=document.createElement('div');grid.className='shopGrid';panelButtons.appendChild(grid);
+ for(const [kind,title,desc] of [['health','❤️ TOUGHNESS','+10 max HP'],['speed','💨 TRAINING','+10 movement speed'],['damage','⚔️ MASTERY','+1 all weapon damage']]){
+  const card=document.createElement('div');card.className='shopCard';
+  const cost=20+meta.upgrades[kind]*20;
+  const h=document.createElement('b');h.textContent=title+' · LV '+meta.upgrades[kind]+'/5';card.appendChild(h);
+  const p=document.createElement('p');p.textContent=desc;card.appendChild(p);
+  card.appendChild(button(meta.upgrades[kind]>=5?'MAX':`BUY — ${cost} GEMS`,()=>{
+   if(meta.gems>=cost&&meta.upgrades[kind]<5){meta.gems-=cost;meta.upgrades[kind]++;saveMeta();showMetaShop();}
+  },meta.gems<cost||meta.upgrades[kind]>=5));grid.appendChild(card);
+ }
+ // V37 weapon foundry: V18-compatible persistent progress stored with the hero save.
+const foundry=document.createElement('div');foundry.className='shopGrid';panelButtons.appendChild(foundry);
+const ionCard=document.createElement('div');ionCard.className='shopCard';ionCard.innerHTML='<b>⚛️ ION CANNON — AVAILABLE NOW</b><p>Powerful purple explosive bolts. Available in every run with key 5. Any previously bought mastery levels still apply.</p>';
+ionCard.appendChild(button('AVAILABLE — KEY 5',()=>{},true));foundry.appendChild(ionCard);
+for(const [key,name] of [['pistol','PISTOL'],['shotgun','SHOTGUN'],['blaster','BLASTER'],['rocket','ROCKET'],['ion','ION CANNON']]){
+ const lvl=Math.max(0,Math.min(5,Math.floor(Number(meta.weaponLevels?.[key])||0)));const cost=25+lvl*25;
+ const c=document.createElement('div');c.className='shopCard';const h=document.createElement('b');h.textContent='🔧 '+name+' MASTERY '+lvl+'/5';c.appendChild(h);
+ const d=document.createElement('p');d.textContent='+2 base damage per permanent level. Costs gems, persists through all missions.';c.appendChild(d);
+ c.appendChild(button(lvl>=5?'MAX LEVEL':'UPGRADE — '+cost+' GEMS',()=>{if(meta.gems>=cost&&lvl<5){meta.gems-=cost;meta.weaponLevels[key]=lvl+1;saveMeta();showMetaShop();}},lvl>=5||meta.gems<cost));foundry.appendChild(c);}
+panelButtons.appendChild(button('🗺️ WORLD MAP / MISSIONS',showWorldMap));
+ panelButtons.appendChild(button('📖 STORY JOURNAL',showJournal));
+ panelButtons.appendChild(button('👤 PLAYER PROFILE',showProfile));
+ panelButtons.appendChild(button('📜 QUEST LOG',showQuests));
+ panelButtons.appendChild(button('CHOOSE HERO →',showHeroSelect));
+ panelButtons.appendChild(button('VIEW GEAR',()=>showMetaCollection('equipment')));
+ panelButtons.appendChild(button('ACHIEVEMENTS',()=>showMetaCollection('achievements')));
+ panelButtons.appendChild(button('💾 RECOVER PREVIOUS SAVES',()=>window.open('saves.html','_blank')));
+ panelButtons.appendChild(button('EXPORT SAVE',exportSave));
+ panelButtons.appendChild(button('IMPORT SAVE',importSave));
+ panelButtons.appendChild(button('RESET SAVE',resetSave));
+}
+function showMetaCollection(kind){
+ state='inventory';if(kind==='equipment')showEquipment();else showAchievements();
+ panelButtons.appendChild(button('← HERO BASE',showMetaShop));
+}
+function exportSave(){const blob=new Blob([JSON.stringify(meta,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='battle-arena-lesson7-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function importSave(){
+ const input=document.createElement('input');input.type='file';input.accept='.json,application/json';
+ input.onchange=async()=>{try{const raw=JSON.parse(await input.files[0].text());
+  if(!raw||!Array.isArray(raw.equipment)||!raw.upgrades||!raw.equipped)throw Error('Invalid file');
+  if(!confirm('Replace your current save with this file?'))return;
+  meta={...DEFAULT_SAVE(),...raw,upgrades:{...DEFAULT_SAVE().upgrades,...raw.upgrades},weaponLevels:{...DEFAULT_SAVE().weaponLevels,...(raw.weaponLevels||{})},ionUnlocked:!!raw.ionUnlocked};
+  meta.equipment=meta.equipment.slice(0,60);saveMeta();showMetaShop();
+ }catch(e){alert('Could not import this save file.');}};input.click();
+}
+function resetSave(){if(!confirm('Erase all permanent progression and achievements?'))return;
+ meta=DEFAULT_SAVE();saveMeta();showMetaShop();}
+
+function xpNeeded(){return 20+(level-1)*15;}
+function xpGain(amount){
+ xp+=amount;
+ while(xp>=xpNeeded()){
+   xp-=xpNeeded();level++;if(!hellMode)skillPoints++;
+   if(!hellMode)player.hp=Math.min(player.maxHp,player.hp+15);
+   say('LEVEL UP! Level '+level+' — press K for your skill tree');
+ }
+}
+function resetProgress(index){
+ heroIndex=index;xp=0;level=1;skillPoints=0;skills={vitality:0,power:0,agility:0,fortune:0,precision:0};
+ inventory={medkit:1,boost:0};pickups=[];pickupSerial=0;boostTimers=[];lastAutoPickupSummary="";
+ player.maxHp=HEROES[index].hp+meta.upgrades.health*10;player.hp=player.maxHp;player.speed=HEROES[index].speed+meta.upgrades.speed*10;
+ if(index===2)coins+=35;
+}
+function collectPickup(item, silent=false){
+ if(item.kind==='coin'){coins+=5+Math.min(2,skills.fortune);if(!silent)say('Coin cache collected!');}
+ else if(item.kind==='xp'){xpGain(12);if(!silent)say('XP orb collected!');}
+ else if(item.kind==='medkit'||item.kind==='boost'){
+  inventory[item.kind]++;if(!silent)say(item.kind.toUpperCase()+' added to inventory! Press I.');
+ }
+}
+function dropPickup(x,y){
+ // No magnet: all remaining drops are automatically gathered after every cleared wave.
+ const r=Math.random();const kind=r<.12?'coin':r<.60?'xp':r<.80?'medkit':'boost';
+ pickups.push({id:++pickupSerial,x,y,r:11,kind});
+}
+function autoCollectRemaining(reason='WAVE CLEARED'){
+ // Centralize pickup handling so the economy and XP behave exactly like manual collection.
+ if(!pickups.length){lastAutoPickupSummary='';return '';}
+ const count={coin:0,xp:0,medkit:0,boost:0};
+ const pending=pickups.splice(0,pickups.length);
+ for(const item of pending){if(Object.hasOwn(count,item.kind))count[item.kind]++;collectPickup(item,true);}
+ lastAutoPickupSummary='AUTO-LOOT: '+pending.length+' items ('+
+  [['coin','coins'],['xp','XP'],['medkit','medkits'],['boost','boosts']]
+    .filter(([k])=>count[k]).map(([k,n])=>count[k]+' '+n).join(', ')+')';
+ say(reason+' — '+lastAutoPickupSummary);
+ return lastAutoPickupSummary;
+}
+function useItem(kind){
+ if(inventory[kind]<1)return;
+ if(kind==='boost'&&boostTimers.length>=MAX_BOOST_STACKS){say('BOOST STACKS FULL (5/5)! Wait until one expires.');return;}
+ if(kind==='medkit'&&player.hp>=player.maxHp)return;
+ inventory[kind]--;
+ if(kind==='medkit'){player.hp=Math.min(player.maxHp,player.hp+45);say('Medkit: +45 HP');}
+ if(kind==='boost'){boostTimers.push(BOOST_DURATION);say('DAMAGE BOOST x'+boostTimers.length+' · +'+(boostTimers.length*BOOST_DAMAGE)+' damage!');}
+ if(state==='inventory')showInventory();
+}
+function openOverlay(title,message){
+ if(state!=='playing')return false;
+ state='inventory';keys={};mouse.down=false;openPanel(title,message);return true;
+}
+function resumeOverlay(){state='playing';panel.style.display='none';keys={};mouse.down=false;}
+function showInventory(){
+ if(state==='playing'){if(!openOverlay('🎒 INVENTORY','Pick an item to use, or resume.'))return;}
+ else if(state!=='inventory')return;
+ panelTitle.textContent='🎒 INVENTORY';panelDesc.textContent='Walk over drops for instant pickup. Remaining drops are gathered automatically when a wave ends.';panelButtons.replaceChildren();
+ for(const [kind,label] of [['medkit','❤️ MEDKIT (+45 HP)'],['boost','💥 DAMAGE BOOST (+2 damage / stack, 8s, max 5)']]){
+  const line=document.createElement('div');line.className='inventoryRow';
+  const t=document.createElement('span');t.textContent=label+'  × '+inventory[kind];line.appendChild(t);
+  line.appendChild(button('USE',()=>useItem(kind),inventory[kind]<1||(kind==='medkit'&&player.hp>=player.maxHp)||(kind==='boost'&&boostTimers.length>=MAX_BOOST_STACKS)));
+  panelButtons.appendChild(line);
+ }
+ panelButtons.appendChild(button('RESUME GAME',resumeOverlay));
+}
+const SKILL_INFO=[
+ ['vitality','❤️ VITALITY','+20 maximum HP (and heal 20)'],
+ ['power','⚔️ POWER','+1 damage to all weapons'],
+ ['agility','💨 AGILITY','+22 movement speed'],
+ ['fortune','💰 FORTUNE','+1 coin per enemy (up to +2); modest caches'],
+ ['precision','🎯 PRECISION','+3% critical-hit chance per level (10% base, 25% maximum)']
+];
+function buySkill(kind){
+ if(skillPoints<1||skills[kind]>=5)return;
+ skillPoints--;skills[kind]++;
+ if(kind==='vitality'){player.maxHp+=20;player.hp=Math.min(player.maxHp,player.hp+20);}
+ if(kind==='agility')player.speed+=22;
+ say('SKILL UPGRADED: '+kind.toUpperCase());showSkills();
+}
+function showSkills(){
+ if(state==='playing'){if(!openOverlay('🌟 SKILL TREE','Spend points earned by leveling up.'))return;}
+ else if(state!=='inventory')return;
+ panelTitle.textContent='🌟 SKILL TREE';
+ panelDesc.textContent='Player LV '+level+' · XP '+xp+'/'+xpNeeded()+' · Skill points: '+skillPoints;
+ panelButtons.replaceChildren();const grid=document.createElement('div');grid.className='skillGrid';panelButtons.appendChild(grid);
+ for(const [kind,label,desc] of SKILL_INFO){
+  const card=document.createElement('div');card.className='skillCard';
+  const h=document.createElement('b');h.textContent=label+'  LV '+skills[kind]+'/5';card.appendChild(h);
+  const p=document.createElement('p');p.textContent=desc;card.appendChild(p);
+  card.appendChild(button(skills[kind]>=5?'MAX':'SPEND 1 POINT',()=>buySkill(kind),skillPoints<1||skills[kind]>=5));grid.appendChild(card);
+ }
+ panelButtons.appendChild(button('RESUME GAME',resumeOverlay));
+}
+function showHeroSelect(){
+ state='menu';openPanel('🧑‍🚀 CHOOSE YOUR HERO',activeArena.icon+' '+activeArena.name+' · Survive through Wave '+activeArena.goal+'.');
+ const grid=document.createElement('div');grid.className='heroGrid';panelButtons.appendChild(grid);
+ HEROES.forEach((h,i)=>{const card=document.createElement('div');card.className='heroCard';
+  const icon=document.createElement('div');icon.className='heroAvatar';icon.textContent=h.icon;card.appendChild(icon);
+  const name=document.createElement('strong');name.textContent=h.name;card.appendChild(name);
+  const desc=document.createElement('small');desc.textContent=h.description;card.appendChild(desc);
+  card.appendChild(button('PLAY '+h.name,()=>startGame(i)));grid.appendChild(card);
+ });
+ panelButtons.appendChild(button('← WORLD MAP',showWorldMap));
+ panelButtons.appendChild(button('HERO BASE / PERMANENT UPGRADES',showMetaShop));
+}
+
+const player={x:450,y:260,r:18,hp:100,maxHp:100,speed:235,faceX:1,faceY:0,dashTime:0,dashReady:0,dashX:1,dashY:0,shieldTime:0,shieldReady:0};
+let originalAdminEnabled=false, originalAdminCooldownUntil=0;
+const originalAdminCooldownSeconds=1.5;
+const adminNow=()=>performance.now()/1000;
+const COLORS={pistol:'#ffd257',shotgun:'#ffa05c',blaster:'#75f7e3',rocket:'#ff7592',ion:'#b69aff'};
+function resetWeapons(){weapons=[
+{name:'PISTOL',damage:2,delay:.25,pellets:1,spread:0,speed:580,level:1,owned:true,color:COLORS.pistol},
+{name:'SHOTGUN',damage:1,delay:.65,pellets:5,spread:.62,speed:485,level:1,owned:true,color:COLORS.shotgun},
+{name:'BLASTER',damage:1,delay:.10,pellets:1,spread:.05,speed:660,level:1,owned:true,color:COLORS.blaster},
+{name:'ROCKET',damage:24,delay:.48,pellets:1,spread:0,speed:640,level:1,owned:true,color:COLORS.rocket},
+{name:'ION CANNON',damage:16,delay:.35,pellets:1,spread:0,speed:690,level:1,owned:true,color:COLORS.ion}
+];
+// Persistent upgrades only add power and never reduce the V18 Blaster's base stats.
+for(const w of weapons){const k=w.name==='ION CANNON'?'ion':w.name.toLowerCase();w.damage+=Math.min(5,Math.max(0,Number(meta.weaponLevels?.[k])||0))*2;}
+}
+resetWeapons();
+function say(s){status.textContent=s;}
+function button(label,callback,disabled=false){const b=document.createElement('button');b.textContent=label;b.disabled=disabled;b.addEventListener('click',callback);return b;}
+function openPanel(title,message){panelTitle.textContent=title;panelDesc.textContent=message;panelButtons.replaceChildren();panel.style.display='flex';}
+function startGame(index=heroIndex){leaderboardRecorded=false;if(!hellMode)decisionEffects();else battleBonus={hp:0,damage:0,enemySpeed:1,extraCoins:0};bossPhaseSeen=false;lastRandomBossType=null;missionComplete=false;if(!hellMode){meta.runs++;achievementCheck();}runLootCount=0;wave=1;score=0;coins=0;kills=0;time=0;lastShot=-100;hurtTimer=0;v36UltReadyAt=[0,0];selected=0;keys={};mouse.down=false;resetWeapons();
+player.x=W/2;player.y=H/2;resetProgress(index);player.maxHp+=battleBonus.hp;player.hp=player.maxHp;ally=hellMode?null:chooseAlly();
+if(hellMode){player.maxHp=90;player.hp=90;player.speed=245;coins=0;inventory={medkit:0,boost:0};hellWarnings=[];hellElapsed=0;}allyCooldown=0;player.dashTime=0;player.dashReady=0;player.shieldTime=0;player.shieldReady=0;
+bullets=[];enemyBullets=[];enemies=[];explosions=[];particles=[];damageTexts=[];screenShake=0;flashStrength=0;boss=null;startWave();}
+// Hazard phases are relative to the beginning of each wave, so you never spawn into
+// a fully active attack. Every pulse picks one of several fixed safe-to-read positions.
+function hazardState(h){
+ const elapsed=time-hazardWaveStart;
+ const local=elapsed-h.delay;
+ const cycle=local>=0?Math.floor(local/h.period):0;
+ const phase=local>=0?local-cycle*h.period:local;
+ const active=phase>=0&&phase<h.activeFor;
+ const warning=(phase>=-h.warn&&phase<0)||(local>=0&&phase>=h.period-h.warn);
+ const live=active||warning;
+ // In the last 1.4s of a cycle, show the NEXT pulse's location.
+ const locationCycle=local>=0&&phase>=h.period-h.warn?cycle+1:cycle;
+ const a=(locationCycle*7+h.seed*3)%5;
+ let x=h.x??([145,275,405,535,665][a]);
+ let y=h.y??([155,225,300,375,440][(a+2)%5]);
+ if(h.shape==='lane'){
+  if(h.axis==='x')x=[120,260,400,540,680][a];
+  else y=[139,206,277,353,424][a];
+ }
+ return {active,warning,live,x,y,phase};
+}
+function hazardActive(h){return hazardState(h).active;}
+function hazardHits(h,z){
+ if(h.shape==='lane')return h.axis==='x'?Math.abs(player.x-z.x)<h.width/2+player.r:Math.abs(player.y-z.y)<h.width/2+player.r;
+ return Math.hypot(player.x-z.x,player.y-z.y)<player.r+h.r;
+}
+// Campaign hazards: large, relocating telegraphed blasts and moving lane threats.
+// More forgiving than HELL, but impossible to ignore. Early waves have two patterns;
+// later waves add a horizontal shockwave. Pulses are offset for escape time.
+function makeHazards(){
+ const types={brambles:{color:'#84e58c',dmg:22},ice:{color:'#95ddff',dmg:25},electric:{color:'#ffe576',dmg:28},lava:{color:'#ff7853',dmg:32},void:{color:'#d69bff',dmg:35}};
+ const t=types[activeArena.hazard]||types.brambles;
+ const scale=Math.min(6,Math.max(0,wave-1))*2;
+ return [
+  {shape:'circle',r:94,damage:t.dmg+scale,color:t.color,period:7.1,activeFor:1.8,delay:3.1,warn:1.6,seed:wave*3+1},
+  {shape:'lane',axis:'x',width:145,damage:t.dmg+3+scale,color:t.color,period:8.3,activeFor:1.7,delay:5.8,warn:1.65,seed:wave*7+2},
+  ...(wave>=2?[{shape:'lane',axis:'y',width:112,damage:t.dmg+5+scale,color:t.color,period:10.2,activeFor:1.5,delay:8.2,warn:1.8,seed:wave*11+4}]:[])
+ ];
+}
+// V12: normal waves are multi-squad encounters, not one small group.
+// Squads wait for either their timer OR for the current enemies to be defeated.
+let waveSquadsLeft=0, waveSquadIndex=0, waveSquadNextAt=0, waveSquadStart=0;
+// Kill rewards are limited per wave so 4-5 reinforcement squads don't flood the shop.
+let waveKillCoins=0;
+function waveCoinLimit(){return hellMode?Math.min(47,31+Math.floor(wave/3)*3):Math.min(54,30+Math.floor(wave/3)*4);}
+function awardKillCoins(defeated){
+ const base=defeated.elite?4:1;
+ const bonus=Math.min(2,skills.fortune)+Math.min(2,gearBonus('charm'))+Math.min(2,battleBonus.extraCoins);
+ const reward=Math.max(0,Math.min(base+bonus,waveCoinLimit()-waveKillCoins));
+ waveKillCoins+=reward;coins+=reward;
+}
+
+function makeSquad(){
+ if(waveSquadsLeft<=0||boss)return;
+ const total=waveSquadsLeft;
+ waveSquadIndex++;
+ waveSquadsLeft--;
+ const hell=hellMode;
+ const count=Math.min(hell?8:9,(hell?4:5)+Math.floor(wave/3)+(waveSquadIndex===3?2:0));
+ const maxEnemies=hell?18:17;
+ const toSpawn=Math.max(0,Math.min(count,maxEnemies-enemies.length));
+ for(let i=0;i<toSpawn;i++){
+  let kind;
+  if(hell){const order=['grunt','assassin','sniper','grunt','bulwark','summoner'];kind=order[(i+wave+waveSquadIndex*2)%order.length];}
+  else kind=(i%3===0 || (wave>=4&&i%4===0))?'ranged':'grunt';
+  spawnEnemy(kind);
+  // A clearly marked elite arrives in later squads; stronger but not invincible.
+  if((i===0&&waveSquadIndex>=2)||(i===3&&waveSquadIndex>=3&&wave>=5)){
+   const e=enemies[enemies.length-1];e.elite=true;e.hp=Math.ceil(e.hp*(hell?2.15:2.5));e.maxHp=e.hp;
+   e.speed*=1.09;e.r+=3;
+  }
+ }
+ waveSquadNextAt=time+(hell?12.5:11.5);
+ say('WAVE '+wave+' — REINFORCEMENTS '+waveSquadIndex+'/'+(waveSquadIndex+waveSquadsLeft)+'!');
+}
+function updateSquadSchedule(){
+ if(boss||waveSquadsLeft<=0)return;
+ // A short 2s breather on an empty screen. Otherwise reinforcements arrive on a timer.
+ if(enemies.length===0){if(!waveSquadStart)waveSquadStart=time; if(time-waveSquadStart>=2 && time>=waveSquadNextAt-3)makeSquad();}
+ else {waveSquadStart=0;if(time>=waveSquadNextAt && enemies.length<12)makeSquad();}
+}
+function startWave(){if(musicEnabled&&!musicTicker)startMusic();hellWarnings=[];hazardWaveStart=time;hazards=hellMode?makeHellHazards():makeHazards();persistWave();state='playing';panel.style.display='none';bullets=bullets.filter(b=>b.adminRocket);enemyBullets=[];explosions=[];keys={};mouse.down=false;hurtTimer=.8;boss=null;enemies=[];
+waveSquadsLeft=0;waveSquadIndex=0;waveSquadNextAt=0;waveSquadStart=0;waveKillCoins=0;
+if(wave===activeArena.goal || wave%activeArena.bossEvery===0){spawnBoss();}
+else{
+ // Three squads on early waves, four on later waves: no more 10-second clears.
+ waveSquadsLeft=(wave>=5?5:4);
+ makeSquad();
+ say('Wave '+wave+'/'+activeArena.goal+' — '+(wave>=5?5:4)+' enemy squads incoming!');
+}}
+function spawnPosition(){let side=Math.floor(Math.random()*4);if(side===0)return{x:-35,y:Math.random()*H};if(side===1)return{x:W+35,y:Math.random()*H};if(side===2)return{x:Math.random()*W,y:-35};return{x:Math.random()*W,y:H+35};}
+function spawnEnemy(kind='grunt',x=null,y=null){const pos=x===null?spawnPosition():{x,y};const baseHP=kind==='ranged'?4+Math.floor(wave/4):3+Math.floor(wave/3);const hp=Math.ceil(baseHP*activeArena.enemyHp*DIFFICULTY[difficulty].hp);
+const monsterHp=hellMode?Math.ceil(hp*({sniper:.85,assassin:.72,bulwark:2.25,summoner:1.3,grunt:1}[kind]||1)):hp;
+enemies.push({x:pos.x,y:pos.y,r:kind==='bulwark'?24:kind==='assassin'?13:kind==='ranged'?17:18,hp:monsterHp,maxHp:monsterHp,speed:((kind==='ranged'?94:kind==='sniper'?98:kind==='assassin'?92:kind==='bulwark'?44:kind==='summoner'?45:69)+Math.min(wave*5,70))*activeArena.enemySpeed*battleBonus.enemySpeed*DIFFICULTY[difficulty].speed,kind,nextAttack:time+1+Math.random(),reward:5,windup:0,dashVX:0,dashVY:0,dashUntil:0,strife:Math.random()<.5?-1:1,face:0});}
+function spawnBoss(){
+ // Each boss wave is a mystery until it begins. Avoid repeating the last boss.
+ // The Crown Citadel finale is the one exception: the story requires the Shattered King.
+ const pool=hellMode?['BRUTE','SNIPER','SUMMONER','WARDEN','KING']:['BRUTE','SNIPER','SUMMONER','WARDEN'];
+ const candidates=pool.filter(name=>name!==lastRandomBossType);
+ const type=(!hellMode&&activeArena.id==='throne'&&wave===activeArena.goal)
+   ?'KING':candidates[Math.floor(Math.random()*candidates.length)];
+ lastRandomBossType=type;
+ // Bosses have distinct movement, health and attack styles.
+ const baseHp={BRUTE:95,SNIPER:77,SUMMONER:86,WARDEN:104,KING:118};
+ const base=baseHp[type]+wave*(hellMode?8:6);
+ const hp=Math.ceil(base*activeArena.enemyHp*DIFFICULTY[difficulty].hp);
+ const finalMultiplier=wave===activeArena.goal?1.4:1;
+ const stages=(wave===activeArena.goal||type==='KING')?4:3;
+ // Each stage has its own real health bar. Damage cannot skip an entire phase.
+ // Scale the stage size rather than simply multiplying one enormous health bar.
+ const stageHp=Math.ceil(hp*(wave===activeArena.goal?1.12:1.0));
+ boss={x:W-125,y:H/2,r:type==='KING'?57:type==='BRUTE'?53:46,
+   type,hp:stageHp,maxHp:stageHp,phaseHp:stageHp,stage:1,maxStages:stages,
+   phasePauseUntil:time+1.8,encounterStart:time,attackIndex:0,damageBudget:stageHp*.14,damageBudgetAt:time,
+   speed:(type==='SNIPER'?88:type==='WARDEN'?75:type==='SUMMONER'?62:68)*DIFFICULTY[difficulty].speed,
+   nextAttack:time+2.5,nextSummon:time+4,phase:0};
+ enemyBullets=[];hellWarnings=[];
+ // Only reveal its identity once the battle starts.
+ say((wave===activeArena.goal?'FINAL BOSS: ':'SURPRISE BOSS: ')+type+'!');
+}
+function chooseWeapon(i){if(state!=='playing'||!weapons[i].owned)return;selected=i;lastShot=-100;say('Equipped '+weapons[i].name);}
+function upgradeCost(w){return 24*w.level;}
+function upgrade(i){const w=weapons[i];if(!w.owned||w.level>=5||coins<upgradeCost(w))return false;coins-=upgradeCost(w);w.level++;w.damage++;say(w.name+' upgraded to level '+w.level);return true;}
+function showShop(){if(hellMode)return showHellIntermission();if(state==='playing')autoCollectRemaining();state='shop';keys={};mouse.down=false;player.hp=Math.min(player.maxHp,player.hp+10);
+openPanel('🛒 WEAPON SHOP — WAVE '+wave,(wave>=activeArena.goal?'MISSION BOSS DEFEATED! · ':'Wave '+wave+'/'+activeArena.goal+' cleared · ')+'Coins: '+coins+' · Kill earnings this wave '+waveKillCoins+'/'+waveCoinLimit()+(wave>=activeArena.goal?' · Claim your victory.':' · Prepare for Wave '+(wave+1)+'. You receive +10 HP per cleared wave.')+(lastAutoPickupSummary?' · '+lastAutoPickupSummary:''));
+const grid=document.createElement('div');grid.className='shopGrid';panelButtons.appendChild(grid);
+weapons.forEach((w,i)=>{const card=document.createElement('div');card.className='shopCard';const heading=document.createElement('b');heading.textContent=(i+1)+'. '+w.name+' — LV '+w.level;card.appendChild(heading);
+const detail=document.createElement('p');detail.textContent='Damage '+w.damage+' · '+(w.owned?'Owned':'Locked')+(i===3?' · Heavy 120px explosive blast':i===4?' · Fast 90px plasma blast':'');card.appendChild(detail);
+if(!w.owned){const unlockCost=i===4?140:85;card.appendChild(button('UNLOCK — '+unlockCost+' COINS',()=>{if(coins>=unlockCost){coins-=unlockCost;w.owned=true;say(w.name+' unlocked for this run!');showShop();}},coins<unlockCost));}
+else{const cost=upgradeCost(w);card.appendChild(button(w.level===5?'MAX LEVEL':'UPGRADE — '+cost+' COINS',()=>{if(upgrade(i))showShop();},w.level>=5||coins<cost));}
+grid.appendChild(card);});
+const healCost=38;panelButtons.appendChild(button('HEAL +35 HP — '+healCost+' COINS',()=>{if(coins>=healCost&&player.hp<player.maxHp){coins-=healCost;player.hp=Math.min(player.maxHp,player.hp+35);showShop();}},coins<healCost||player.hp>=player.maxHp));
+panelButtons.appendChild(button(wave>=activeArena.goal?'✅ COMPLETE MISSION':'NEXT WAVE →',()=>{if(wave>=activeArena.goal)finishMission();else{wave++;startWave();}}));}
+function gameOver(){if(hellMode)return hellGameOver();autoCollectRemaining('GAME OVER');recordLeaderboard('Defeated');meta.gems+=Math.floor(kills/8);achievementCheck();state='gameover';keys={};mouse.down=false;openPanel('GAME OVER','Score '+score+' · Wave '+wave+' · Kills '+kills+' · Coins '+coins+(lastAutoPickupSummary?' · '+lastAutoPickupSummary:''));panelButtons.appendChild(button('HERO BASE / UPGRADES',showMetaShop));panelButtons.appendChild(button('WORLD MAP',showWorldMap));panelButtons.appendChild(button('🏆 LEADERBOARD',()=>showLeaderboard('campaign',showWorldMap)));panelButtons.appendChild(button('CHOOSE A NEW HERO',showHeroSelect));}
+// Keyboard / mouse
+function aim(e){const r=canvas.getBoundingClientRect();mouse.x=(e.clientX-r.left)*W/r.width;mouse.y=(e.clientY-r.top)*H/r.height;}
+canvas.addEventListener('pointermove',aim);
+canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;aim(e);mouse.down=true;canvas.setPointerCapture(e.pointerId);});
+for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,()=>mouse.down=false);
+document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea,select,[contenteditable=true]'))return; if(e.key.toLowerCase()==='f'&&!e.repeat){e.preventDefault();originalAdminNova();return;}if(e.key.toLowerCase()==='g'&&!e.repeat){e.preventDefault();v35ToggleAim();return;}const raw=e.key.toLowerCase();if(raw==='v'&&!e.repeat){e.preventDefault();v36CastUltimate(player,heroIndex,0);return;}if(waitingForKey){e.preventDefault();const action=waitingForKey;waitingForKey=null;setRebind(action,raw);return;}const k=resolveActionKey(raw);if(!k)return;if([' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))e.preventDefault();keys[k]=true;
+if(e.repeat)return;if(k==='r')showHeroSelect();if(k==='1')chooseWeapon(0);if(k==='2')chooseWeapon(1);if(k==='3')chooseWeapon(2);if(k==='4')chooseWeapon(3);if(k==='5')chooseWeapon(4);
+if(k==='u'&&state==='playing'){say('Visit the shop between waves to upgrade!');}if(k==='shift')dash();if(k==='q')shield();if(k==='i'){if(state==='playing')showInventory();else if(state==='inventory')resumeOverlay();}if(k==='k'){if(state==='playing')showSkills();else if(state==='inventory')resumeOverlay();}if(k==='e'){if(state==='playing')showEquipment();else if(state==='inventory')resumeOverlay();}if(k==='h'){if(state==='playing')showAchievements();else if(state==='inventory')resumeOverlay();}});
+document.addEventListener('keyup',e=>{const k=resolveActionKey(e.key.toLowerCase());if(k)keys[k]=false;});window.addEventListener('blur',()=>{keys={};mouse.down=false;});
+function inputVector(){let x=0,y=0;if(keys['a']||keys['arrowleft'])x--;if(keys['d']||keys['arrowright'])x++;if(keys['w']||keys['arrowup'])y--;if(keys['s']||keys['arrowdown'])y++;const len=Math.hypot(x,y);return len?{x:x/len,y:y/len}:{x:0,y:0};}
+function dash(){if(state!=='playing'||time<player.dashReady)return;let d=inputVector();if(!d.x&&!d.y){const angle=Math.atan2(mouse.y-player.y,mouse.x-player.x);d={x:Math.cos(angle),y:Math.sin(angle)};}
+player.dashX=d.x;player.dashY=d.y;player.dashTime=.18;player.dashReady=time+(hellMode?4:2.2);addParticles(player.x,player.y,'#86e2ff',23,190);beep(390,.1,'sawtooth');say('DASH!');}
+function shield(){if(state!=='playing'||time<player.shieldReady)return;player.shieldTime=hellMode?.65:2;player.shieldReady=time+(hellMode?15:9);addParticles(player.x,player.y,'#78ffe2',24,155);beep(620,.22);say('SHIELD ACTIVE — 2 seconds!');}
+function hitCircle(a,b){return Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r;}
+function enemyShoot(x,y,speed,count=1,spread=0){const a=Math.atan2(player.y-y,player.x-x);for(let i=0;i<count;i++){const off=count===1?0:(i-(count-1)/2)*spread/(count-1);const angle=a+off;enemyBullets.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,r:7,damage:12});}}
+
+// V35: admin-only auto-targeting. Bosses receive priority; never affects non-admin players.
+let originalAdminAimOn=false;
+function v35AdminTarget(x,y){
+ if(!originalAdminEnabled||!originalAdminAimOn)return null;
+ if(boss&&boss.hp>0&&(!boss.phasePauseUntil||time>=boss.phasePauseUntil))return boss;
+ let closest=null,near=Infinity;
+ for(const enemy of enemies){if(enemy.hp<=0)continue;const d=Math.hypot(enemy.x-x,enemy.y-y);if(d<near){near=d;closest=enemy;}}
+ return closest;
+}
+function v35ToggleAim(){
+ if(!originalAdminEnabled){say('Unlock ADMIN with ADEP first');return;}
+ originalAdminAimOn=!originalAdminAimOn;
+ document.getElementById('originalAdminAim').textContent=originalAdminAimOn?'🎯 AIMBOT ON (G)':'🎯 AIMBOT OFF (G)';
+ say('ADMIN AIMBOT '+(originalAdminAimOn?'ENABLED':'DISABLED'));
+}
+function v35GuideRockets(dt){
+ if(!originalAdminEnabled||!originalAdminAimOn)return;
+ for(const b of bullets){if(!b.adminRocket)continue;const t=v35AdminTarget(b.x,b.y);if(!t)continue;
+ const speed=Math.hypot(b.vx,b.vy)||965;
+ const old=Math.atan2(b.vy,b.vx),desired=Math.atan2(t.y-b.y,t.x-b.x);
+ let delta=Math.atan2(Math.sin(desired-old),Math.cos(desired-old));
+ const newAngle=old+Math.max(-6*dt,Math.min(6*dt,delta));
+ b.vx=Math.cos(newAngle)*speed;b.vy=Math.sin(newAngle)*speed;
+ }
+}
+function shoot(){const w=weapons[selected];if(!w.owned||time-lastShot<w.delay)return;lastShot=time;attackKick=.17;const target=v35AdminTarget(player.x,player.y);const a=target?Math.atan2(target.y-player.y,target.x-player.x):Math.atan2(mouse.y-player.y,mouse.x-player.x);
+addParticles(player.x+Math.cos(a)*29,player.y+Math.sin(a)*29,w.color,selected===1?9:4,90);beep(selected===3?110:selected===2?430:265,.065,'square',.008);
+for(let i=0;i<w.pellets;i++){const off=w.pellets===1?(Math.random()-.5)*w.spread:(i-(w.pellets-1)/2)*w.spread/(w.pellets-1);const angle=a+off;
+bullets.push({x:player.x,y:player.y,vx:Math.cos(angle)*w.speed,vy:Math.sin(angle)*w.speed,r:selected===3?9:selected===4?7:5,damage:w.damage+skills.power+passiveDamage()+(boostTimers.length*BOOST_DAMAGE),color:w.color,rocket:selected===3||selected===4});}}
+// ADMIN ROCKET NOVA: local original campaign only. Each rocket uses the normal
+// explosion + boss-armor pipeline, so boss stages cannot be deleted instantly.
+function originalAdminNova(){
+ if(!originalAdminEnabled){say('Admin Mode locked. Enter the code below the arena.');return;}
+ if(state!=='playing'){say('Start a mission before firing Rocket Nova.');return;}
+ if(adminNow()<originalAdminCooldownUntil)return;
+ originalAdminCooldownUntil=adminNow()+originalAdminCooldownSeconds;
+ const rockets=32,speed=965;
+ for(let i=0;i<rockets;i++){
+  const a=2*Math.PI*i/rockets,dx=Math.cos(a),dy=Math.sin(a);
+  bullets.push({x:player.x+dx*27,y:player.y+dy*27,vx:dx*speed,vy:dy*speed,
+   r:12,damage:650,color:'#ff954f',rocket:true,adminRocket:true});
+ }
+ addParticles(player.x,player.y,'#ffc26b',40,240);
+ screenShake=Math.max(screenShake,9);beep(105,.22,'sawtooth',.028);
+ say('🚀 ADMIN OVERDRIVE — 32 SUPER ROCKETS!');
+ refreshOriginalAdminStatus();
+}
+function refreshOriginalAdminStatus(){
+ const btn=document.getElementById('originalAdminFire');
+ const lab=document.getElementById('originalAdminStatus');
+ if(!btn||!lab)return;
+ const remaining=Math.max(0,originalAdminCooldownUntil-adminNow());
+ btn.disabled=!originalAdminEnabled||state!=='playing'||remaining>0;
+ lab.textContent=!originalAdminEnabled?'Locked':remaining>0?'Recharge '+remaining.toFixed(1)+'s':state==='playing'?'READY — F':'Unlocked';
+}
+function originalAdminExplosion(b){
+ return burst(b.x,b.y,b.damage,150,true);
+}
+function setupOriginalAdmin(){
+ const field=document.getElementById('originalAdminPass');
+ const unlock=()=>{
+  if(field.value.trim().toUpperCase()==='ADEP'){
+   originalAdminEnabled=true;field.value='';field.blur();say('ADMIN UNLOCKED — START A MISSION, THEN PRESS F OR CLICK ROCKET NOVA');
+  }else{say('Admin code not accepted. Check the passcode and press UNLOCK.');}
+  refreshOriginalAdminStatus();
+ };
+ document.getElementById('originalAdminUnlock').addEventListener('click',unlock);
+ document.getElementById('originalAdminFire').addEventListener('click',originalAdminNova);
+ document.getElementById('originalAdminAim').addEventListener('click',v35ToggleAim);
+ field.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();unlock();}});
+ refreshOriginalAdminStatus();
+}
+setupOriginalAdmin();
+
+function damagePlayer(amount){if(hurtTimer>0||player.dashTime>0||player.shieldTime>0)return;const taken=Math.max(1,Math.ceil(amount*DIFFICULTY[difficulty].damage)-effectiveDefense()*2);
+player.hp-=taken;hurtTimer=.65;screenShake=Math.max(screenShake,9);flashStrength=.27;
+addParticles(player.x,player.y,'#ff687d',15,185);floatText(player.x,player.y-23,'-'+taken,'#ff9eaf');beep(135,.17,'sawtooth',.05);if(player.hp<=0){player.hp=0;gameOver();}}
+// Boss armor: every damage source (bullets, rockets and companions) uses this
+// function. Each phase requires several accurate hits AND sustained pressure.
+// Rapid-fire builds stay useful, but no weapon can erase a phase instantly.
+function applyBossDamage(rawDamage,isExplosion=false){
+ if(!boss||boss.hp<=0||time<boss.phasePauseUntil)return 0;
+ if(!Number.isFinite(rawDamage)||rawDamage<=0)return 0;
+ // A generous per-hit cap prevents one powerful rocket or cheat-sized stat
+ // from eliminating the entire phase, while still rewarding strong equipment.
+ const hitLimit=boss.maxHp*(isExplosion?.095:.065);
+ const reduced=Math.min(rawDamage*(isExplosion?.72:.78),hitLimit);
+ // Regenerate the damage budget smoothly: at least ~12 seconds of real combat
+ // per health bar, regardless of build. Burst attacks cannot bypass it.
+ const now=time;
+ const elapsed=Math.max(0,now-(boss.damageBudgetAt??now));
+ const budgetMax=boss.maxHp*.14;
+ boss.damageBudget=Math.min(budgetMax,(boss.damageBudget??budgetMax)+elapsed*boss.maxHp*.075);
+ boss.damageBudgetAt=now;
+ const applied=Math.min(reduced,boss.damageBudget,boss.hp);
+ boss.damageBudget-=applied;
+ boss.hp-=applied;
+ return applied;
+}
+function burst(x,y,damage,radius=85,admin=false){
+ explosions.push({x,y,r:radius,age:0});addParticles(x,y,'#ffb65a',35,240);
+ screenShake=Math.max(screenShake,10);beep(95,.19,'sawtooth',.04);
+ let largestHit=0;
+ for(const e of enemies){if(e.hp>0&&Math.hypot(e.x-x,e.y-y)<radius+e.r){e.hp-=damage;largestHit=Math.max(largestHit,damage);}}
+ if(boss&&boss.hp>0&&Math.hypot(boss.x-x,boss.y-y)<radius+boss.r){
+  if(admin){
+   // Admin only: strong boss damage independent from the standard boss DPS budget.
+   if(time>=boss.phasePauseUntil){const hit=Math.min(boss.hp, Math.max(120, boss.maxHp*.28));boss.hp-=hit;largestHit=Math.max(largestHit,hit);}
+  }else largestHit=Math.max(largestHit,applyBossDamage(damage,true));
+ }
+ return largestHit;
+}
+// HELL MODE SHOOTER FIX: move all ranged enemies every active frame.
+// Choosing from eight directions prevents edge-clamping from cancelling movement.
+function kiteShooter(e,dt,near=270,far=335){
+  const dx=e.x-player.x,dy=e.y-player.y;
+  const distance=Math.max(1,Math.hypot(dx,dy));
+  const ux=dx/distance,uy=dy/distance;
+  const bounds={l:e.r+8,r:W-e.r-8,t:e.r+80,b:H-e.r-8};
+  const retreat=distance<near;
+  const chase=distance>far;
+  const turn=e.strife||1;
+  const candidates=retreat
+    ? [[ux,uy],[uy,-ux],[-uy,ux],[ux+uy,uy-ux],[ux-uy,uy+ux],[-ux,-uy]]
+    : chase
+      ? [[-ux,-uy],[-uy,ux],[uy,-ux],[-ux-uy,-uy+ux],[-ux+uy,-uy-ux]]
+      : [[uy*turn,-ux*turn],[-uy*turn,ux*turn],[ux,uy],[-ux,-uy]];
+  const speed=e.speed*(retreat?1.8:chase?1.1:1.2);
+  const look=Math.max(.28,dt*5);
+  let best=null,bestScore=-Infinity;
+  for(const raw of candidates){
+    const magnitude=Math.hypot(raw[0],raw[1])||1;
+    const vx=raw[0]/magnitude,vy=raw[1]/magnitude;
+    const destX=e.x+vx*speed*look,destY=e.y+vy*speed*look;
+    const safeX=Math.max(bounds.l,Math.min(bounds.r,destX));
+    const safeY=Math.max(bounds.t,Math.min(bounds.b,destY));
+    const displacement=Math.hypot(safeX-e.x,safeY-e.y);
+    const resultingDistance=Math.hypot(safeX-player.x,safeY-player.y);
+    const wallPenalty=Math.hypot(destX-safeX,destY-safeY);
+    let score=displacement*.7-wallPenalty*4;
+    if(retreat)score+=(resultingDistance-distance)*3.5;
+    else if(chase)score+=(distance-resultingDistance)*2.0;
+    else score+=Math.min(30,Math.abs(resultingDistance-(near+far)/2))*(-.06);
+    if(score>bestScore){bestScore=score;best={vx,vy};}
+  }
+  if(!best)return;
+  const beforeX=e.x,beforeY=e.y;
+  e.x=Math.max(bounds.l,Math.min(bounds.r,e.x+best.vx*speed*dt));
+  e.y=Math.max(bounds.t,Math.min(bounds.b,e.y+best.vy*speed*dt));
+  if(Math.hypot(e.x-beforeX,e.y-beforeY)<speed*dt*.2)e.strife=-(e.strife||1);
+}
+
+// V36 HERO ULTIMATES — independent of the Admin Aimbot / Rocket Nova.
+// Cooldowns are monotonic, so pausing, transitioning waves, or restarting cannot create huge timers.
+let v36UltReadyAt=[0,0];
+const V36_ULT_NAMES=['🛡️ FORTRESS SLAM','⚡ LIGHTNING RUSH','🛰️ ORBITAL STRIKE'];
+function v36UltNow(){return performance.now()/1000;}
+function v36CastUltimate(caster,hero,slot){
+ if(state!=='playing'||!caster||caster.hp<=0)return false;
+ const now=v36UltNow();if(now<v36UltReadyAt[slot]){say('ULTIMATE charging: '+Math.ceil(v36UltReadyAt[slot]-now)+'s');return false;}
+ v36UltReadyAt[slot]=now+24;
+ const x=caster.x,y=caster.y;
+ if(hero===0){
+   caster.shieldTime=Math.max(caster.shieldTime||0,6);
+   burst(x,y,240,235,false);addParticles(x,y,'#8dceff',65,310);
+ }else if(hero===1){
+   caster.dashTime=Math.max(caster.dashTime||0,.65);
+   const targets=[...enemies].filter(e=>e.hp>0).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y)).slice(0,12);
+   for(const e of targets){e.hp-=190;explosions.push({x:e.x,y:e.y,r:48,age:0});addParticles(e.x,e.y,'#86ffda',15,145);}
+   if(boss&&boss.hp>0)applyBossDamage(Math.max(250,boss.maxHp*.18),true);
+ }else{
+   const targets=[...enemies].filter(e=>e.hp>0).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y)).slice(0,8);
+   if(boss&&boss.hp>0)targets.unshift(boss);
+   if(!targets.length){for(let i=0;i<6;i++){const a=i*Math.PI/3;burst(x+Math.cos(a)*110,y+Math.sin(a)*110,125,85,false);}}
+   for(const e of targets){burst(e.x,e.y,175,82,false);}
+   addParticles(x,y,'#ffd681',55,280);
+ }
+ screenShake=Math.max(screenShake,12);say('✨ '+V36_ULT_NAMES[hero]+'!');return true;
+}
+function v36RefreshUltimate(){
+ const a=document.getElementById('v36UltStatus'),b=document.getElementById('v36UltButton');if(!a||!b)return;
+ const cool=Math.max(0,v36UltReadyAt[0]-v36UltNow());a.textContent=V36_ULT_NAMES[heroIndex]+' · '+(cool?cool.toFixed(1)+'s':'READY');b.disabled=state!=='playing'||player.hp<=0||cool>0;
+}
+document.getElementById('v36UltButton').onclick=()=>v36CastUltimate(player,heroIndex,0);
+function update(dt){v36RefreshUltimate();refreshOriginalAdminStatus();if(state!=='playing')return;time+=dt;if(hellMode)hellElapsed+=dt;updateHellWarnings(dt);fxUpdate(dt);boostTimers=boostTimers.map(t=>t-dt).filter(t=>t>0);
+const d=inputVector();if(d.x||d.y){player.faceX=d.x;player.faceY=d.y;}
+if(player.dashTime>0){player.x+=player.dashX*820*dt;player.y+=player.dashY*820*dt;player.dashTime=Math.max(0,player.dashTime-dt);}else{player.x+=d.x*player.speed*dt;player.y+=d.y*player.speed*dt;}
+player.x=Math.max(player.r,Math.min(W-player.r,player.x));player.y=Math.max(player.r+72,Math.min(H-player.r,player.y));
+hurtTimer=Math.max(0,hurtTimer-dt);player.shieldTime=Math.max(0,player.shieldTime-dt);
+// Environmental hazards: pulse on/off, deal damage only while active.
+for(const h of hazards){
+ const z=hazardState(h);
+ if(z.active&&hazardHits(h,z))damagePlayer(h.damage);
+}
+
+if(touchFiring){autoAimMobile();}if(keys[' ']||mouse.down||touchFiring)shoot();
+v35GuideRockets(dt);
+for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;}
+for(const b of enemyBullets){b.x+=b.vx*dt;b.y+=b.vy*dt;}
+for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];if(b.adminRocket&&(b.x<0||b.x>W||b.y<73||b.y>H)){originalAdminExplosion(b);bullets.splice(i,1);}}
+bullets=bullets.filter(b=>b.x>-20&&b.x<W+20&&b.y>-20&&b.y<H+20);
+enemyBullets=enemyBullets.filter(b=>b.x>-20&&b.x<W+20&&b.y>-20&&b.y<H+20);
+for(const e of enemies){const a=Math.atan2(player.y-e.y,player.x-e.x),dist=Math.hypot(player.x-e.x,player.y-e.y);
+if(e.kind==='ranged'){
+  // Purple shooters must KITE in BOTH campaign and HELL gauntlet.
+  // Old campaign code stopped their movement once dist <= 205.
+  kiteShooter(e,dt,hellMode?265:210,hellMode?335:285);
+  if(time>=e.nextAttack){if(!hellMode)enemyShoot(e.x,e.y,190);else addHellWarning({type:'aim',x:e.x,y:e.y,a:Math.atan2(player.y-e.y,player.x-e.x),fireAt:time+.85,speed:330,spread:0,count:1});e.nextAttack=time+(hellMode?3.1:2.1);}
+}else if(hellMode&&e.kind==='sniper'){
+  kiteShooter(e,dt,290,365);
+  if(time>=e.nextAttack){addHellWarning({type:'aim',x:e.x,y:e.y,a:Math.atan2(player.y-e.y,player.x-e.x),fireAt:time+.95,speed:390,spread:0,count:1});e.nextAttack=time+2.8;}
+}else if(hellMode&&e.kind==='assassin'){
+  if(e.dashUntil>time){e.x+=e.dashVX*510*dt;e.y+=e.dashVY*510*dt;}
+  else {e.x+=Math.cos(a)*e.speed*.72*dt;e.y+=Math.sin(a)*e.speed*.72*dt;
+   if(time>=e.nextAttack){const ux=Math.cos(a),uy=Math.sin(a);e.dashVX=ux;e.dashVY=uy;e.dashUntil=0; e.windup=time+.73;addHellWarning({type:'dash',x:e.x,y:e.y,a,fireAt:e.windup,speed:0,enemy:e});e.nextAttack=time+3.7;}}
+}else if(hellMode&&e.kind==='bulwark'){
+  e.face=a;e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;
+}else if(hellMode&&e.kind==='summoner'){
+  if(dist>280){e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;}
+  if(time>=e.nextAttack){if(enemies.length<23)spawnEnemy('grunt',e.x+25,e.y+25);e.nextAttack=time+5.4;}
+}else{e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;}
+// Every enemy, including snipers and assassins, stays inside the playable arena.
+if(hellMode||e.kind==='ranged'){e.x=Math.max(e.r+8,Math.min(W-e.r-8,e.x));e.y=Math.max(e.r+80,Math.min(H-e.r-8,e.y));}
+if(hitCircle(e,player))damagePlayer(hellMode?16:17);}
+if(boss&&boss.hp>0){const a=Math.atan2(player.y-boss.y,player.x-boss.x),dist=Math.hypot(player.x-boss.x,player.y-boss.y);
+const stageCharging=time<boss.phasePauseUntil;
+if(!stageCharging){if(boss.type==='SNIPER'){kiteShooter(boss,dt,205,290);}else if(dist>125){boss.x+=Math.cos(a)*boss.speed*dt;boss.y+=Math.sin(a)*boss.speed*dt;}}
+boss.x=Math.max(boss.r,Math.min(W-boss.r,boss.x));boss.y=Math.max(boss.r+78,Math.min(H-boss.r,boss.y));
+if(!stageCharging&&time>=boss.nextAttack){
+  // Every boss has rotating *telegraphed* attack patterns, even in the campaign.
+  const k=(boss.attackIndex++)%4;
+  const angle=Math.atan2(player.y-boss.y,player.x-boss.x);
+  const stage=boss.stage;
+  const warning=hellMode?1.15:1.35;
+  const attackDamageSpeed=hellMode?1.12:1;
+  if(k===0){addHellWarning({type:'fan',x:boss.x,y:boss.y,a:angle,fireAt:time+warning,
+    speed:(260+stage*24)*attackDamageSpeed,count:5+stage*2,spread:1.0+stage*.2});}
+  else if(k===1){addHellWarning({type:'ring',x:boss.x,y:boss.y,a:angle,fireAt:time+warning+.12,
+    speed:(175+stage*16)*attackDamageSpeed,count:10+stage*3});}
+  else if(k===2){addHellWarning({type:'aim',x:boss.x,y:boss.y,a:angle,fireAt:time+warning*.85,
+    speed:(325+stage*27)*attackDamageSpeed,count:1});}
+  else{addHellWarning({type:'lanes',x:boss.x,y:boss.y,a:angle,slot:Math.max(0,Math.min(7,Math.floor(player.x/100))),
+    fireAt:time+warning+.2,count:0});}
+  const interval=hellMode?Math.max(1.8,3.1-stage*.27):Math.max(2.0,3.35-stage*.27);
+  boss.nextAttack=time+interval;
+}
+if(!stageCharging&&(boss.type==='SUMMONER'||boss.type==='KING')&&time>=boss.nextSummon&&enemies.length<10){spawnEnemy('grunt',boss.x-65,boss.y-55);spawnEnemy('grunt',boss.x+65,boss.y+55);boss.nextSummon=time+Math.max(3,5.4-boss.stage*.48);}
+if(!stageCharging&&hitCircle(boss,player))damagePlayer(28);}
+// Friendly ally follows the hero and attacks the nearest threat.
+if(ally){
+ const followX=player.x-46,followY=player.y+38;
+ ally.x+=(followX-ally.x)*Math.min(1,dt*4);
+ ally.y+=(followY-ally.y)*Math.min(1,dt*4);
+ allyCooldown=Math.max(0,allyCooldown-dt);
+ let target=null,near=ally.range||500;
+ for(const e of enemies){const d=Math.hypot(e.x-ally.x,e.y-ally.y);if(e.hp>0&&d<near){target=e;near=d;}}
+ if(boss&&boss.hp>0){const d=Math.hypot(boss.x-ally.x,boss.y-ally.y);if(d<near){target=boss;near=d;}}
+ if(target&&allyCooldown<=0){
+  const angle=Math.atan2(target.y-ally.y,target.x-ally.x);
+  bullets.push({x:ally.x,y:ally.y,vx:Math.cos(angle)*ally.bulletSpeed,vy:Math.sin(angle)*ally.bulletSpeed,r:5,damage:1+(ally.damageBonus||0)+Math.floor(ally.friendship/2),color:ally.color,allyShot:true});
+  allyCooldown=Math.max(.28,ally.shotDelay-ally.friendship*.09);
+ }
+}
+// Final boss phase transition: freeze combat for a short story scene.
+if(!hellMode&&boss&&boss.type==='KING'&&!bossPhaseSeen&&boss.hp>0&&boss.hp<=boss.maxHp*.5){
+ bossPhaseSeen=true;
+ const threshold=boss.maxHp*.5;
+ playCutscene(activeArena,'phase',()=>{state='playing';panel.style.display='none';keys={};mouse.down=false;lastFrame=0;});
+}
+// Bullets vs enemies and boss; rocket explodes on first contact.
+for(let i=bullets.length-1;i>=0;i--){const b=bullets[i];let target=null;
+for(const e of enemies){if(e.hp>0&&hitCircle(b,e)){target=e;break;}}
+if(!target&&boss&&boss.hp>0&&time>=boss.phasePauseUntil&&hitCircle(b,boss))target=boss;
+if(target){
+ const critical=rollCritical();
+ const hitDamage=(b.damage+battleBonus.damage)*(critical?CRIT_MULTIPLIER:1);
+ let dealt=hitDamage;
+ if(b.rocket){
+   // Critical explosion multiplies splash against regular enemies; the existing
+   // boss armor still limits damage from this explosion to a safe amount.
+   dealt=burst(b.x,b.y,b.adminRocket?hitDamage:hitDamage*(b.color===COLORS.rocket?2.6:1.85),b.adminRocket?150:(b.color===COLORS.rocket?120:90),!!b.adminRocket);
+ }else{
+   if(hellMode&&target.kind==='bulwark'&&Math.cos(Math.atan2(b.vy,b.vx)-target.face)<-0.25)dealt*=.25;
+   if(target===boss)dealt=applyBossDamage(dealt,false);
+   else target.hp-=dealt;
+ }
+ addParticles(b.x,b.y,critical?'#ffe777':target===boss?'#ffd46c':'#ff8f93',critical?18:9,critical?165:100);
+ floatText(b.x,b.y-14,(critical?'★ CRIT! ':'')+Math.max(0,Math.floor(dealt)),critical?'#fff16a':'#ffe28f');
+ if(critical&&!prefs.reducedMotion)screenShake=Math.max(screenShake,5);
+ if(target===boss)screenShake=Math.max(screenShake,3);
+ bullets.splice(i,1);
+}}
+for(let i=enemyBullets.length-1;i>=0;i--){if(hitCircle(enemyBullets[i],player)){damagePlayer(enemyBullets[i].damage);enemyBullets.splice(i,1);}}
+for(let i=enemies.length-1;i>=0;i--){if(enemies[i].hp<=0){const defeated=enemies[i];enemies.splice(i,1);addParticles(defeated.x,defeated.y,'#ff6476',22,155);beep(175,.07,'triangle',.015);score+=10;kills++;awardKillCoins(defeated);if(!hellMode){meta.totalKills++;meta.questCounts.kills=(meta.questCounts.kills||0)+1;}xpGain(hellMode?3:6);if(!hellMode&&Math.random()<.55)dropPickup(defeated.x,defeated.y);if(!hellMode&&Math.random()<.13)grantLoot();if(!hellMode)achievementCheck();}}
+if(boss&&boss.hp<=0&&boss.stage<boss.maxStages){
+  boss.stage++;
+  boss.hp=boss.phaseHp;
+  boss.maxHp=boss.phaseHp;
+  boss.damageBudget=boss.phaseHp*.14;boss.damageBudgetAt=time;
+  boss.phasePauseUntil=time+2.15;
+  boss.nextAttack=boss.phasePauseUntil+.45;
+  boss.nextSummon=boss.phasePauseUntil+2.8;
+  boss.attackIndex=(boss.attackIndex+1)%4;
+  boss.speed*=1.08;
+  bullets=bullets.filter(b=>b.adminRocket);enemyBullets=[];hellWarnings=[];
+  addParticles(boss.x,boss.y,'#ffd16b',60,220);
+  screenShake=12;flashStrength=.22;
+  say('⚠ '+boss.type+' — PHASE '+boss.stage+'/'+boss.maxStages+'! Prepare to dodge!');
+  beep(140,.5,'sawtooth',.035);
+}
+if(boss&&boss.hp<=0){if(!hellMode){meta.bossKills=(meta.bossKills||0)+1;meta.questCounts.bosses=(meta.questCounts.bosses||0)+1;}if(!hellMode){meta.gems+=25;grantLoot(true);achievementCheck();}const bx=boss.x,by=boss.y;addParticles(bx,by,'#ffd568',75,270);screenShake=17;flashStrength=.5;beep(100,.4,'sawtooth',.05);boss=null;score+=150;coins+=20;xpGain(hellMode?12:45);if(!hellMode){inventory.medkit++;dropPickup(bx,by);player.hp=Math.min(player.maxHp,player.hp+30);}say(hellMode?'BOSS DEFEATED! +20 coins, +150 score — NO HEALING':'BOSS DEFEATED! +20 coins, +30 HP, +150 score');}
+// Walking over a power-up still collects it immediately; leftovers are gathered at the end of the wave.
+for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];
+ if(Math.hypot(p.x-player.x,p.y-player.y)<player.r+p.r){
+  pickups.splice(i,1);collectPickup(p);
+ }
+}
+for(const x of explosions)x.age+=dt;explosions=explosions.filter(x=>x.age<.25);
+if(state==='playing')updateSquadSchedule();
+if(state==='playing'&&enemies.length===0&&!boss&&waveSquadsLeft===0)showShop();}
+
+function draw(){ctx.save();if(screenShake>0&&prefs.shake&&!prefs.reducedMotion){ctx.translate((Math.random()-.5)*screenShake,(Math.random()-.5)*screenShake);}v38DrawBackdrop();
+ctx.strokeStyle='rgba(148,208,255,.09)';ctx.lineWidth=1;for(let x=0;x<W;x+=(prefs.quality==='low'?140:64)){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}for(let y=0;y<H;y+=(prefs.quality==='low'?140:64)){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+for(const h of hazards){
+ const z=hazardState(h);if(!z.live)continue;ctx.save();ctx.beginPath();
+ if(h.shape==='lane'){ if(h.axis==='x')ctx.rect(z.x-h.width/2,75,h.width,H-85); else ctx.rect(0,z.y-h.width/2,W,h.width); }
+ else ctx.arc(z.x,z.y,h.r,0,Math.PI*2);
+ ctx.fillStyle=z.active?h.color+'55':h.color+'18';ctx.fill();
+ ctx.strokeStyle=h.color;ctx.lineWidth=z.active?5:4;ctx.setLineDash(z.warning?[12,9]:[]);ctx.stroke();ctx.setLineDash([]);
+ ctx.textAlign='center';ctx.font='bold 16px Arial';ctx.fillStyle=z.active?'#ffffff':h.color;const text=z.active?'DANGER':'⚠ ARMING'; const labelY=h.shape==='lane'?(h.axis==='x'?118:z.y):z.y+6;ctx.fillText(text,h.shape==='lane'&&h.axis==='x'?z.x:h.shape==='lane'?W/2:z.x,labelY);ctx.textAlign='left';ctx.restore();}
+ if(ally)v38DrawAlly(ally);
+ for(const b of bullets)v38DrawBullet(b,false);
+ for(const b of enemyBullets)v38DrawBullet(b,true);
+ for(const e of enemies)v38DrawEnemy(e);
+ if(boss)v38DrawBoss(boss);
+ for(const p of pickups)v38DrawPickup(p);
+ for(const x of explosions)v38DrawExplosion(x);
+ const a=Math.atan2(mouse.y-player.y,mouse.x-player.x);
+ ctx.save();if(hurtTimer>0&&player.shieldTime<=0)ctx.globalAlpha=.55;v38DrawHero(player,a,HEROES[heroIndex].color,weapons[selected].color,'',false);ctx.restore();
+ if(player.shieldTime>0){ctx.strokeStyle='#80fff2';ctx.lineWidth=4;ctx.beginPath();ctx.arc(player.x,player.y,player.r+12+Math.sin(time*10)*1.5,0,Math.PI*2);ctx.stroke();}
+ if(player.dashTime>0&&!prefs.reducedMotion){ctx.strokeStyle='#85d8ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(player.x,player.y,player.r+8,0,Math.PI*2);ctx.stroke();}
+ drawHellWarnings();fxDraw();if(flashStrength>0){ctx.fillStyle='rgba(255,110,100,'+Math.min(.25,flashStrength)+')';ctx.fillRect(0,0,W,H);}
+ ctx.fillStyle='rgba(5,12,23,.9)';ctx.fillRect(0,0,W,76);ctx.fillStyle='rgba(4,10,18,.78)';ctx.fillRect(0,H-42,W,42);
+ ctx.save();ctx.fillStyle='#fff07e';ctx.font='bold 18px Arial';ctx.textAlign='center';ctx.fillText(originalAdminEnabled?'🚀 ADMIN MODE ON · F = ROCKET NOVA · G = AIMBOT':'BATTLE ARTS · V40 PIXEL',W/2,126);ctx.restore();
+ ctx.font='bold 18px Arial';ctx.fillStyle='white';ctx.fillText((hellMode?'☠ HELL ':'')+'HP '+player.hp+'/'+player.maxHp,18,28);ctx.fillText('WAVE '+wave+'/'+activeArena.goal,220,28);ctx.fillText('KILLS '+kills,390,28);ctx.fillText('SCORE '+score,555,28);ctx.fillText('COINS '+coins,785,28);
+ if(boostTimers.length){ctx.fillStyle='#ffc76a';ctx.font='bold 13px Arial';ctx.fillText('BOOST x'+boostTimers.length+' (+'+(boostTimers.length*BOOST_DAMAGE)+' DMG) · '+Math.ceil(Math.min(...boostTimers))+'s NEXT',18,70);}
+ ctx.fillStyle='#ffe578';ctx.font='bold 13px Arial';ctx.fillText('CRIT '+Math.round(criticalChance()*100)+'%  ×'+CRIT_MULTIPLIER,890,H-18);
+ if(!boss&&waveSquadsLeft>0){ctx.fillStyle='#ffdc8c';ctx.font='bold 13px Arial';ctx.fillText('SQUAD '+waveSquadIndex+'/'+(waveSquadIndex+waveSquadsLeft)+' · '+waveSquadsLeft+' INCOMING',390,62);}
+ ctx.font='bold 15px Arial';ctx.fillStyle='#d4e7ff';ctx.fillText(activeArena.icon+' '+activeArena.name+' · '+profileName()+' · LV '+level+' XP '+xp+'/'+xpNeeded()+' · SP '+skillPoints+' · GEMS '+meta.gems,14,H-14);
+ ctx.fillStyle='#334963';ctx.fillRect(14,H-10,430,5);ctx.fillStyle='#9b8dff';ctx.fillRect(14,H-10,430*xp/xpNeeded(),5);
+ ctx.fillStyle='#813b48';ctx.fillRect(18,42,170,8);ctx.fillStyle='#59d991';ctx.fillRect(18,42,170*player.hp/player.maxHp,8);
+ const w=weapons[selected];ctx.fillStyle=w.color;ctx.fillText('['+(selected+1)+'] '+w.name+' LV '+w.level,230,61);ctx.font='15px Arial';ctx.fillStyle='#bce8ff';ctx.fillText('SHIFT '+(time>=player.dashReady?'READY':Math.ceil(player.dashReady-time)+'s'),620,61);ctx.fillText('Q SHIELD '+(time>=player.shieldReady?'READY':Math.ceil(player.shieldReady-time)+'s'),840,61);
+ if(boss){ctx.fillStyle='#4a2438';ctx.fillRect(330,84,620,20);ctx.fillStyle='#ff5978';ctx.fillRect(330,84,620*Math.max(0,boss.hp)/boss.maxHp,20);ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.strokeRect(330,84,620,20);for(let n=0;n<boss.maxStages;n++){ctx.fillStyle=n<boss.stage-1?'#8d89aa':'#f7ca6d';ctx.fillRect(330+n*(620/boss.maxStages),108,620/boss.maxStages-5,6);}if(time<boss.phasePauseUntil){ctx.fillStyle='#ffdb89';ctx.font='bold 20px Arial';ctx.textAlign='center';ctx.fillText('⚠ PHASE '+boss.stage+' — BOSS SHIELD RECHARGING',W/2,158);}ctx.font='bold 15px Arial';ctx.fillStyle='white';ctx.textAlign='center';ctx.fillText(boss.type+' BOSS  ·  STAGE '+boss.stage+'/'+boss.maxStages+(time<boss.phasePauseUntil?' · CHARGING':''),W/2,99);ctx.textAlign='left';}
+ ctx.restore();}
+
+function loop(timestamp){if(!lastFrame)lastFrame=timestamp;let dt=Math.min((timestamp-lastFrame)/1000,.05);lastFrame=timestamp;update(dt);draw();requestAnimationFrame(loop);}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){keys={};mouse.down=false;touchFiring=false;if(state==='playing')togglePauseRelease();}});
+
+// V38 graphics upgrade: pixel-art sprites, richer effects, and display helpers.
+function v38Shadow(x,y,rx,ry,a=.25){ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#02060b';ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+function v38PanelGlow(x,y,w,h,c,a=.35){ctx.save();ctx.globalAlpha=a;ctx.fillStyle=c;ctx.fillRect(x,y,w,h);ctx.restore();}
+function v38DrawBackdrop(){
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0f1a2c');g.addColorStop(.45,activeArena.bg);g.addColorStop(1,'#0a0f19');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ for(let i=0;i<18;i++){const sy=((i*137)%H);ctx.fillStyle='rgba(255,255,255,.025)';ctx.fillRect(((i*271)+time*8)%W,20+sy*.15,2,2);}
+ const bandColors=['rgba(70,125,180,.09)','rgba(128,86,168,.07)','rgba(255,170,110,.05)'];
+ for(let i=0;i<3;i++){ctx.fillStyle=bandColors[i];ctx.beginPath();ctx.moveTo(0,H-(150+i*45));for(let x=0;x<=W;x+=80){ctx.lineTo(x,H-(145+i*45)-Math.sin((x*0.014)+(time*.22)+(i*1.7))*12);}ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();}
+ ctx.fillStyle='rgba(255,255,255,.03)';for(let x=0;x<W;x+=32){ctx.fillRect(x,H-118+(x/32%2?6:0),16,118);} }
+function v38WeaponGlow(x1,y1,x2,y2,color,width){ctx.save();ctx.lineCap='round';ctx.strokeStyle=color;ctx.lineWidth=width+6;ctx.globalAlpha=.18;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.globalAlpha=1;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.restore();}
+function v38DrawHero(p,angle,color,weaponColor,label,downed){const s=4;v38Shadow(p.x,p.y+p.r-1,18,8,.28);ctx.save();ctx.translate(p.x,p.y);if(downed)ctx.globalAlpha=.38;ctx.fillStyle='#111a26';ctx.fillRect(-3*s,4*s,6*s,2*s);ctx.fillStyle=color;ctx.fillRect(-3*s,-2*s,6*s,7*s);ctx.fillStyle='#aef2ff';ctx.fillRect(-2*s,-1*s,4*s,2*s);ctx.fillStyle='#f7d6b0';ctx.fillRect(-2*s,-5*s,4*s,3*s);ctx.fillStyle='#1a2435';ctx.fillRect(-2*s,-7*s,4*s,2*s);ctx.fillStyle='#0c1320';ctx.fillRect(-3*s,-3*s,1*s,5*s);ctx.fillRect(2*s,-3*s,1*s,5*s);ctx.fillRect(-2*s,5*s,1*s,3*s);ctx.fillRect(1*s,5*s,1*s,3*s);ctx.restore();
+ const bx=p.x+Math.cos(angle)*18, by=p.y+Math.sin(angle)*18;v38WeaponGlow(p.x,p.y,bx+Math.cos(angle)*18,by+Math.sin(angle)*18,weaponColor,7);
+ if(label){ctx.font='bold 14px Arial';ctx.fillStyle='white';ctx.textAlign='center';ctx.fillText(label,p.x,p.y-30);ctx.textAlign='left';}
+}
+function v38DrawAlly(a){v38Shadow(a.x,a.y+a.r,16,7,.24);v38DrawHero({x:a.x,y:a.y,r:a.r},Math.sin(time*3)*.2,'#56dcb8','#dffcfb',a.name,false);}
+function v38EnemyColors(e){return e.kind==='sniper'?'#ee83ec':e.kind==='assassin'?'#ffb35a':e.kind==='bulwark'?'#70d7ba':e.kind==='summoner'?'#bd78fd':e.kind==='ranged'?'#a263ec':({wild:'#e34e5b',frost:'#79d5f4',iron:'#d5a36f',ash:'#ff7755',crown:'#b98cf4'}[activeArena.faction]||'#e34e5b');}
+function v38DrawEnemy(e){const c=v38EnemyColors(e),s=Math.max(3,Math.floor(e.r/5));v38Shadow(e.x,e.y+e.r,Math.max(14,e.r*.8),Math.max(6,e.r*.33),.26);ctx.save();ctx.translate(e.x,e.y);ctx.fillStyle=c;ctx.fillRect(-3*s,-2*s,6*s,5*s);ctx.fillStyle='#161a24';ctx.fillRect(-2*s,-5*s,4*s,3*s);ctx.fillStyle='#ffffff';ctx.fillRect(-2*s,-1*s,1*s,1*s);ctx.fillRect(1*s,-1*s,1*s,1*s);ctx.fillStyle='#351522';ctx.fillRect(-1*s,1*s,2*s,1*s);ctx.fillStyle='#0d1320';ctx.fillRect(-3*s,3*s,1*s,2*s);ctx.fillRect(2*s,3*s,1*s,2*s);if(e.kind==='assassin'){ctx.fillStyle='#ffd28a';ctx.fillRect(-4*s,-3*s,1*s,2*s);ctx.fillRect(3*s,-3*s,1*s,2*s);}if(e.kind==='sniper'){ctx.fillStyle='#ffd7fd';ctx.fillRect(3*s,-2*s,3*s,1*s);}if(e.kind==='bulwark'){ctx.fillStyle='#d7fff5';ctx.fillRect(-5*s,-1*s,2*s,4*s);}if(e.kind==='summoner'){ctx.fillStyle='#f4cbff';ctx.fillRect(-1*s,-7*s,2*s,2*s);}ctx.restore();
+ if(e.elite){ctx.strokeStyle='#ffd56f';ctx.lineWidth=3;ctx.strokeRect(e.x-4*s-5,e.y-6*s-4,8*s+10,11*s+6);}ctx.fillStyle='#25162a';ctx.fillRect(e.x-22,e.y-e.r-17,44,6);ctx.fillStyle='#6cf0a2';ctx.fillRect(e.x-22,e.y-e.r-17,44*Math.max(0,e.hp)/e.maxHp,6);}
+function v38DrawBoss(b){const color=b.type==='BRUTE'?'#a347bb':b.type==='SNIPER'?'#e8844d':b.type==='KING'?'#f2c75d':b.type==='WARDEN'?'#b76bea':'#5ec7b6';const s=Math.max(5,Math.floor(b.r/7));v38Shadow(b.x,b.y+b.r+4,b.r*.95,b.r*.35,.32);ctx.save();ctx.translate(b.x,b.y);ctx.fillStyle=color;ctx.fillRect(-4*s,-3*s,8*s,8*s);ctx.fillStyle='#1a1425';ctx.fillRect(-3*s,-7*s,6*s,4*s);ctx.fillStyle='#fff';ctx.fillRect(-2*s,-2*s,1*s,1*s);ctx.fillRect(1*s,-2*s,1*s,1*s);ctx.fillStyle='#ff576f';ctx.fillRect(-2*s,-1*s,1*s,1*s);ctx.fillRect(1*s,-1*s,1*s,1*s);ctx.fillStyle='#32162f';ctx.fillRect(-2*s,2*s,4*s,1*s);if(b.type==='KING'){ctx.fillStyle='#ffea82';ctx.fillRect(-3*s,-9*s,6*s,2*s);ctx.fillRect(-2*s,-11*s,1*s,2*s);ctx.fillRect(0,-12*s,1*s,3*s);ctx.fillRect(2*s,-11*s,1*s,2*s);}ctx.restore();}
+function v38DrawBullet(b,hostile){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(Math.atan2(b.vy||0,b.vx||1));if(b.rocket||b.adminRocket){ctx.fillStyle=b.color||'#ff8b3d';ctx.fillRect(-8,-4,16,8);ctx.fillStyle='#ffe7a4';ctx.fillRect(8,-2,8,4);ctx.fillStyle='#7a2134';ctx.fillRect(-10,-2,3,4);ctx.fillStyle='rgba(255,186,87,.5)';ctx.fillRect(-18,-3,7,6);}else if(hostile){ctx.fillStyle='#ff6a7a';ctx.fillRect(-5,-2,10,4);ctx.fillStyle='#ffd3d9';ctx.fillRect(5,-1,4,2);}else{ctx.fillStyle=b.color||'#ffd75b';ctx.fillRect(-4,-3,8,6);ctx.fillStyle='#fff6c4';ctx.fillRect(2,-2,3,4);}ctx.restore();}
+function v38DrawPickup(p){const color={coin:'#ffd45a',xp:'#96b6ff',medkit:'#ff7a8d',boost:'#ffb45b'}[p.kind];v38Shadow(p.x,p.y+12,10,4,.22);ctx.fillStyle=color;ctx.fillRect(p.x-10,p.y-10,20,20);ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(p.x-7,p.y-7,6,6);ctx.font='bold 13px Arial';ctx.fillStyle='#17233b';ctx.textAlign='center';ctx.fillText(({coin:'$',xp:'X',medkit:'+',boost:'!'})[p.kind],p.x,p.y+5);ctx.textAlign='left';}
+function v38DrawExplosion(x){const f=x.age/.25;const r=x.r*(.35+f*1.25);ctx.save();ctx.globalAlpha=Math.max(0,1-f);ctx.fillStyle='rgba(255,174,74,.25)';ctx.beginPath();ctx.arc(x.x,x.y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,224,118,.85)';ctx.lineWidth=6;ctx.strokeRect(x.x-r*.45,x.y-r*.45,r*.9,r*.9);ctx.restore();}
+
+
+
+// V40 visual/combat helper override — armored sprites and stronger battle effects.
+function v38Shadow(x,y,rx,ry,a=.25){ctx.save();ctx.globalAlpha=a;ctx.fillStyle='#02060b';ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+function v40TargetRing(x,y,r,c){ctx.save();ctx.strokeStyle=c;ctx.lineWidth=2.5;ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(x-r-6,y);ctx.lineTo(x-r+2,y);ctx.moveTo(x+r-2,y);ctx.lineTo(x+r+6,y);ctx.moveTo(x,y-r-6);ctx.lineTo(x,y-r+2);ctx.moveTo(x,y+r-2);ctx.lineTo(x,y+r+6);ctx.stroke();ctx.restore();}
+function v38PanelGlow(x,y,w,h,c,a=.35){ctx.save();ctx.globalAlpha=a;ctx.fillStyle=c;ctx.fillRect(x,y,w,h);ctx.restore();}
+function v38DrawBackdrop(){
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0b1221');g.addColorStop(.5,activeArena.bg);g.addColorStop(1,'#050911');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ const lanes=['rgba(99,164,255,.10)','rgba(198,116,255,.07)','rgba(255,180,110,.05)'];
+ for(let i=0;i<3;i++){ctx.fillStyle=lanes[i];ctx.beginPath();ctx.moveTo(0,H-(150+i*50));for(let x=0;x<=W;x+=64){ctx.lineTo(x,H-(150+i*50)-Math.sin((x*.018)+(time*.35)+(i*1.2))*10);}ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();}
+ for(let i=0;i<22;i++){const px=((i*233)+time*14)%W;const py=30+((i*131)%190);ctx.fillStyle='rgba(255,255,255,.028)';ctx.fillRect(px,py,2,2);} 
+ ctx.fillStyle='rgba(255,255,255,.03)';for(let x=0;x<W;x+=28){ctx.fillRect(x,H-124+((x/28)%2?6:0),14,124);} }
+function v38WeaponGlow(x1,y1,x2,y2,color,width){ctx.save();ctx.lineCap='round';ctx.strokeStyle=color;ctx.lineWidth=width+7;ctx.globalAlpha=.14;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.globalAlpha=.9;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.restore();}
+function v38DrawHero(p,angle,color,weaponColor,label,downed){const s=4;v38Shadow(p.x,p.y+p.r+2,18,8,.28);ctx.save();ctx.translate(p.x,p.y);if(downed)ctx.globalAlpha=.38;
+ ctx.fillStyle='#09101b';ctx.fillRect(-2*s,6*s,2*s,2*s);ctx.fillRect(0,6*s,2*s,2*s); // boots
+ ctx.fillStyle='#182336';ctx.fillRect(-2*s,3*s,2*s,3*s);ctx.fillRect(0,3*s,2*s,3*s); // legs
+ ctx.fillStyle=color;ctx.fillRect(-3*s,-1*s,6*s,5*s); // torso armor
+ ctx.fillStyle='#d8f3ff';ctx.fillRect(-2*s,0,4*s,2*s); // chest stripe
+ ctx.fillStyle='#0f1826';ctx.fillRect(-5*s,-1*s,2*s,3*s);ctx.fillRect(3*s,-1*s,2*s,3*s); // shoulder pads
+ ctx.fillStyle='#101827';ctx.fillRect(-5*s,2*s,2*s,3*s);ctx.fillRect(3*s,2*s,2*s,3*s); // gauntlets
+ ctx.fillStyle='#f3d0b0';ctx.fillRect(-2*s,-4*s,4*s,3*s); // face
+ ctx.fillStyle='#1a2435';ctx.fillRect(-3*s,-6*s,6*s,2*s); // helmet top
+ ctx.fillStyle='#9be7ff';ctx.fillRect(-2*s,-5*s,4*s,1*s); // visor
+ ctx.fillStyle='#1f2e48';ctx.fillRect(-1*s,-7*s,2*s,1*s); // crest base
+ ctx.fillStyle=weaponColor;ctx.fillRect(-4*s,1*s,1*s,2*s);ctx.fillRect(3*s,1*s,1*s,2*s); // weapon hand accent
+ ctx.restore();
+ const bx=p.x+Math.cos(angle)*18, by=p.y+Math.sin(angle)*18;v38WeaponGlow(p.x,p.y,bx+Math.cos(angle)*21,by+Math.sin(angle)*21,weaponColor,7);
+ ctx.save();ctx.strokeStyle='rgba(255,255,255,.14)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y+1,p.r+6,Math.max(-2.2,angle-.55),Math.min(2.2,angle+.55));ctx.stroke();ctx.restore();
+ if(label){ctx.font='bold 14px Arial';ctx.fillStyle='white';ctx.textAlign='center';ctx.fillText(label,p.x,p.y-30);ctx.textAlign='left';}
+}
+function v38DrawAlly(a){const allyColor=a.role==='support'?'#65f0d0':a.role==='tank'?'#7bc7ff':'#ffd46e';v38DrawHero({x:a.x,y:a.y,r:a.r},Math.sin(time*2.5)*.35,allyColor,'#f2fbff',a.name||'ALLY',false);v40TargetRing(a.x,a.y,a.r+8,'rgba(160,255,233,.55)');}
+function v38EnemyColors(e){return e.kind==='sniper'?'#df8cff':e.kind==='assassin'?'#ffae66':e.kind==='bulwark'?'#5be4c8':e.kind==='summoner'?'#c788ff':e.kind==='ranged'?'#9f71ff':({wild:'#e85f6d',frost:'#79d5f4',iron:'#d9a16c',ash:'#ff7c5c',crown:'#b98cf4'}[activeArena.faction]||'#e85f6d');}
+function v38DrawEnemy(e){const c=v38EnemyColors(e),s=Math.max(3,Math.floor(e.r/5));v38Shadow(e.x,e.y+e.r,Math.max(14,e.r*.8),Math.max(6,e.r*.33),.26);ctx.save();ctx.translate(e.x,e.y);
+ ctx.fillStyle='#131a26';ctx.fillRect(-2*s,5*s,2*s,2*s);ctx.fillRect(0,5*s,2*s,2*s); // boots
+ ctx.fillStyle='#1f2835';ctx.fillRect(-2*s,2*s,2*s,3*s);ctx.fillRect(0,2*s,2*s,3*s); // legs
+ ctx.fillStyle=c;ctx.fillRect(-3*s,-1*s,6*s,5*s); // torso
+ ctx.fillStyle='#111621';ctx.fillRect(-5*s,-1*s,2*s,3*s);ctx.fillRect(3*s,-1*s,2*s,3*s); // shoulders
+ ctx.fillStyle='#18111e';ctx.fillRect(-2*s,-4*s,4*s,3*s); // helm
+ ctx.fillStyle='#fff';ctx.fillRect(-2*s,-3*s,1*s,1*s);ctx.fillRect(1*s,-3*s,1*s,1*s); // eyes
+ ctx.fillStyle='#9e112c';ctx.fillRect(-1*s,-1*s,2*s,1*s); // mouth
+ if(e.kind==='sniper'){ctx.fillStyle='#ffe3ff';ctx.fillRect(3*s,0,4*s,1*s);} // rifle
+ if(e.kind==='assassin'){ctx.fillStyle='#ffd08e';ctx.fillRect(-6*s,-1*s,1*s,3*s);ctx.fillRect(5*s,-1*s,1*s,3*s);} // daggers
+ if(e.kind==='bulwark'){ctx.fillStyle='#d3fff7';ctx.fillRect(-6*s,-2*s,2*s,5*s);} // shield
+ if(e.kind==='summoner'){ctx.fillStyle='#f7cbff';ctx.fillRect(-1*s,-7*s,2*s,2*s);} // sigil
+ ctx.restore();
+ if(e.elite){v40TargetRing(e.x,e.y,e.r+10,'rgba(255,213,111,.88)');ctx.strokeStyle='#ffd56f';ctx.lineWidth=3;ctx.strokeRect(e.x-4*s-5,e.y-6*s-4,8*s+10,11*s+6);}ctx.fillStyle='#25162a';ctx.fillRect(e.x-22,e.y-e.r-17,44,6);ctx.fillStyle='#6cf0a2';ctx.fillRect(e.x-22,e.y-e.r-17,44*Math.max(0,e.hp)/e.maxHp,6);}
+function v38DrawBoss(b){const color=b.type==='BRUTE'?'#a347bb':b.type==='SNIPER'?'#e8844d':b.type==='KING'?'#f2c75d':b.type==='WARDEN'?'#b76bea':'#5ec7b6';const s=Math.max(5,Math.floor(b.r/7));v38Shadow(b.x,b.y+b.r+4,b.r*.95,b.r*.35,.32);v40TargetRing(b.x,b.y,b.r+14,'rgba(255,115,140,.9)');ctx.save();ctx.translate(b.x,b.y);
+ ctx.fillStyle='#121926';ctx.fillRect(-3*s,6*s,2*s,2*s);ctx.fillRect(1*s,6*s,2*s,2*s); // boots
+ ctx.fillStyle='#233044';ctx.fillRect(-3*s,2*s,2*s,4*s);ctx.fillRect(1*s,2*s,2*s,4*s); // legs
+ ctx.fillStyle=color;ctx.fillRect(-5*s,-2*s,10*s,8*s); // chest
+ ctx.fillStyle='#d4f7ff';ctx.fillRect(-2*s,0,4*s,2*s); // chest mark
+ ctx.fillStyle='#1a1227';ctx.fillRect(-7*s,-1*s,2*s,4*s);ctx.fillRect(5*s,-1*s,2*s,4*s); // shoulder armor
+ ctx.fillStyle='#17101d';ctx.fillRect(-4*s,-6*s,8*s,4*s); // helmet
+ ctx.fillStyle='#fff';ctx.fillRect(-2*s,-4*s,1*s,1*s);ctx.fillRect(1*s,-4*s,1*s,1*s);
+ ctx.fillStyle='#ff576f';ctx.fillRect(-2*s,-3*s,1*s,1*s);ctx.fillRect(1*s,-3*s,1*s,1*s);
+ if(b.type==='KING'){ctx.fillStyle='#ffea82';ctx.fillRect(-4*s,-8*s,2*s,2*s);ctx.fillRect(-1*s,-10*s,2*s,4*s);ctx.fillRect(2*s,-8*s,2*s,2*s);} // crown spikes not hat
+ if(b.type==='SNIPER'){ctx.fillStyle='#ffe4cc';ctx.fillRect(5*s,-1*s,4*s,1*s);} // cannon
+ if(b.type==='BRUTE'){ctx.fillStyle='#ffd0ff';ctx.fillRect(-8*s,1*s,3*s,3*s);ctx.fillRect(5*s,1*s,3*s,3*s);} // fists
+ if(b.type==='WARDEN'){ctx.fillStyle='#e0cbff';ctx.fillRect(-1*s,-10*s,2*s,3*s);} // crystal crest
+ ctx.restore();}
+function v38DrawBullet(b,hostile){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(Math.atan2(b.vy||0,b.vx||1));if(b.rocket||b.adminRocket){ctx.fillStyle=b.color||'#ff8b3d';ctx.fillRect(-9,-4,18,8);ctx.fillStyle='#ffe7a4';ctx.fillRect(9,-2,8,4);ctx.fillStyle='#5f1321';ctx.fillRect(-11,-2,3,4);ctx.fillStyle='rgba(255,186,87,.55)';ctx.fillRect(-20,-3,8,6);}else if(hostile){ctx.fillStyle='#ff6a7a';ctx.fillRect(-6,-2,12,4);ctx.fillStyle='#ffd3d9';ctx.fillRect(5,-1,4,2);}else{ctx.fillStyle=b.color||'#ffd75b';ctx.fillRect(-5,-3,10,6);ctx.fillStyle='#fff6c4';ctx.fillRect(2,-2,4,4);}ctx.restore();}
+function v38DrawPickup(p){const color={coin:'#ffd45a',xp:'#96b6ff',medkit:'#ff7a8d',boost:'#ffb45b'}[p.kind];v38Shadow(p.x,p.y+12,10,4,.22);ctx.fillStyle='#101826';ctx.fillRect(p.x-11,p.y-11,22,22);ctx.fillStyle=color;ctx.fillRect(p.x-9,p.y-9,18,18);ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(p.x-6,p.y-6,6,6);ctx.font='bold 13px Arial';ctx.fillStyle='#17233b';ctx.textAlign='center';ctx.fillText(({coin:'$',xp:'X',medkit:'+',boost:'!'})[p.kind],p.x,p.y+5);ctx.textAlign='left';}
+function v38DrawExplosion(x){const f=x.age/.25;const r=x.r*(.35+f*1.25);ctx.save();ctx.globalAlpha=Math.max(0,1-f);ctx.fillStyle='rgba(255,174,74,.22)';ctx.beginPath();ctx.arc(x.x,x.y,r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,224,118,.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x.x,x.y,r*.7,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='rgba(255,130,72,.65)';ctx.beginPath();ctx.moveTo(x.x-r*.7,x.y);ctx.lineTo(x.x+r*.7,x.y);ctx.moveTo(x.x,x.y-r*.7);ctx.lineTo(x.x,x.y+r*.7);ctx.stroke();ctx.restore();}
+
+
+// V42 illustrated RPG artwork. All portraits and scenery are image assets loaded by the browser.
+const v42Images={};
+for(const n of ['hero0','hero1','hero2','hero3','enemy0','enemy1','enemy2','enemy3','boss0','boss1','arena0','arena1','arena2','arena3']){
+  const im=new Image();im.src='assets/'+n+(n.startsWith('arena')?'.jpg':'.png');v42Images[n]=im;
+}
+function v42Img(ctx2,name,x,y,w,h){let im=v42Images[name];if(!im||!im.complete||!im.naturalWidth)return false;ctx2.drawImage(im,x,y,w,h);return true;}
+function v42SceneName(){try{const id=activeArena.id||'meadow';return {'meadow':'arena0','frost':'arena1','scrap':'arena2','ember':'arena3','throne':'arena2'}[id]||'arena0';}catch(e){return 'arena0';}}
+// Colorful but unobtrusive scenery below gameplay hazards, UI and sprites.
+const v42OldBackdrop=typeof v38DrawBackdrop==='function'?v38DrawBackdrop:null;
+v38DrawBackdrop=function(){if(v42OldBackdrop)v42OldBackdrop();ctx.save();ctx.globalAlpha=.32;v42Img(ctx,v42SceneName(),0,78,W,H-78);ctx.fillStyle='rgba(8,12,25,.22)';ctx.fillRect(0,78,W,H-78);ctx.restore();};
+function v42Sprite(ctx2,name,x,y,w,h){
+  ctx2.save();ctx2.fillStyle='rgba(3,9,20,.35)';ctx2.beginPath();ctx2.ellipse(x,y+h*.43,w*.42,h*.12,0,0,Math.PI*2);ctx2.fill();
+  const okay=v42Img(ctx2,name,x-w/2,y-h*.58,w,h);
+  ctx2.restore();return okay;
+}
+const v42HeroOld=v38DrawHero;
+v38DrawHero=function(p,angle,color,weaponColor,label,downed){
+  ctx.save();if(downed)ctx.globalAlpha=.35;
+  let name='hero'+(typeof heroIndex==='number'?Math.abs(heroIndex)%4:0);
+  if(!v42Sprite(ctx,name,p.x,p.y,Math.max(37,p.r*2.3),Math.max(50,p.r*3.1)))v42HeroOld(p,angle,color,weaponColor,'',downed);
+  ctx.restore();const reach=p.r+19;ctx.save();ctx.strokeStyle=weaponColor||'#8eeaff';ctx.shadowColor=weaponColor||'#8eeaff';ctx.shadowBlur=9;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+Math.cos(angle)*reach,p.y+Math.sin(angle)*reach);ctx.stroke();ctx.restore();
+  if(label){ctx.textAlign='center';ctx.font='bold 13px Arial';ctx.fillStyle='#fff';ctx.fillText(label,p.x,p.y-36);ctx.textAlign='left';}
+};
+const v42EnemyOld=v38DrawEnemy;
+v38DrawEnemy=function(e){
+  const type=e.kind||e.type||'grunt';const names={sniper:1,assassin:3,bulwark:0,summoner:2,ranged:1,runner:3,grunt:0,brute:2};
+  const name='enemy'+(names[type]??0);const w=Math.max(34,e.r*2.2),h=Math.max(40,e.r*2.55);
+  if(!v42Sprite(ctx,name,e.x,e.y,w,h)){v42EnemyOld(e);return;}
+  if(e.elite){ctx.strokeStyle='#f6cd67';ctx.lineWidth=2;ctx.beginPath();ctx.arc(e.x,e.y,e.r+8,0,7);ctx.stroke();}
+  ctx.fillStyle='#192333';ctx.fillRect(e.x-22,e.y-e.r-19,44,5);ctx.fillStyle='#71e5a0';ctx.fillRect(e.x-22,e.y-e.r-19,44*Math.max(0,e.hp)/Math.max(1,e.maxHp),5);
+};
+const v42BossOld=v38DrawBoss;
+v38DrawBoss=function(b){
+ const name=b.type==='KING'||b.type==='BRUTE'?'boss1':'boss0';
+ if(!v42Sprite(ctx,name,b.x,b.y,Math.max(90,b.r*2.8),Math.max(88,b.r*2.5)))v42BossOld(b);
+ ctx.save();ctx.strokeStyle='rgba(255,118,154,.75)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(b.x,b.y,b.r+12,0,Math.PI*2);ctx.stroke();ctx.restore();
+};
+const v42AllyOld=v38DrawAlly;
+v38DrawAlly=function(a){
+ const idx=Math.abs((a.name||'Ally').split('').reduce((n,c)=>n+c.charCodeAt(0),0))%4;
+ if(!v42Sprite(ctx,'hero'+idx,a.x,a.y,35,46))v42AllyOld(a);
+ ctx.textAlign='center';ctx.fillStyle='#b8ffee';ctx.font='bold 12px Arial';ctx.fillText(a.name||'ALLY',a.x,a.y-31);ctx.textAlign='left';
+};
+
+
+
+// V43 FRAME-BY-FRAME ANIMATION: all actor sprites use actual distinct poses,
+// with idle (0-1), four run frames (2-5), firing (6) and hit reactions (7).
+const v43Sheets={};
+for(const kind of ['hero','enemy','boss']){
+ const count=kind==='boss'?2:4;
+ for(let i=0;i<count;i++){
+  const im=new Image();im.src='assets/'+kind+'_sheet_'+i+'.png';v43Sheets[kind+i]=im;
+ }
+}
+const v43Track=new WeakMap();
+function v43TrackPose(obj,clock){
+ let st=v43Track.get(obj);
+ if(!st){st={x:obj.x,y:obj.y,hp:obj.hp,at:clock,lastMove:clock,lastHit:-1e6,lastFire:-1e6,dir:2};v43Track.set(obj,st);}
+ const dt=clock-st.at,dx=obj.x-st.x,dy=obj.y-st.y;
+ if(dt>=.03){
+  if(Math.hypot(dx,dy)>.7){st.lastMove=clock;st.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0);}
+  if(Number.isFinite(obj.hp)&&Number.isFinite(st.hp)&&obj.hp<st.hp)st.lastHit=clock;
+  st.hp=obj.hp;st.x=obj.x;st.y=obj.y;st.at=clock;
+ }
+ return st;
+}
+function v43Direction(angle){const x=Math.cos(angle),y=Math.sin(angle);return Math.abs(x)>Math.abs(y)?(x>0?1:3):(y>0?2:0);}
+function v43Draw(c,kind,index,obj,angle,w,h,clock,fire,hit){
+ const img=v43Sheets[kind+index];if(!img||!img.complete||!img.naturalWidth)return false;
+ const st=v43TrackPose(obj,clock);
+ const walking=clock-st.lastMove<.16;
+ if(Number.isFinite(angle))st.dir=v43Direction(angle);
+ let frame=walking?2+(Math.floor(clock*11+(index*.4))%4):Math.floor(clock*2+index)%2;
+ if(fire || clock-st.lastFire<.11)frame=6;
+ if(hit || clock-st.lastHit<.25)frame=7;
+ const fade=obj.alive===false?.38:1;
+ c.save();c.globalAlpha*=fade;
+ c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.ellipse(obj.x,obj.y+16,w*.32,h*.055,0,0,Math.PI*2);c.fill();
+ c.imageSmoothingEnabled=false;
+ c.drawImage(img,frame*80,st.dir*96,80,96,obj.x-w/2,obj.y-h*.67,w,h);
+ c.restore();return true;
+}
+
+// The original static V42 artwork stays loaded for portraits/scenery, but no
+// longer substitutes for characters on the battlefield.
+const v43PrevHero=v38DrawHero,v43PrevEnemy=v38DrawEnemy,v43PrevBoss=v38DrawBoss,v43PrevAlly=v38DrawAlly;
+v38DrawHero=function(p,angle,color,weaponColor,label,downed){
+ const now=time||0;
+ if(!v43Draw(ctx,'hero',Math.abs(heroIndex||0)%4,p,angle,62,78,now,attackKick>.08,hurtTimer>0))v43PrevHero(p,angle,color,weaponColor,label,downed);
+ if(label){ctx.font='bold 12px Arial';ctx.fillStyle='#e7f5ff';ctx.textAlign='center';ctx.fillText(label,p.x,p.y-48);ctx.textAlign='left';}
+};
+v38DrawEnemy=function(e){
+ const type=e.kind||e.type||'grunt',id=({sniper:1,assassin:3,bulwark:2,summoner:1,ranged:1,runner:3,grunt:0,brute:2}[type]||0);
+ if(!v43Draw(ctx,'enemy',id,e,null,Math.max(49,e.r*2.35),Math.max(63,e.r*3.15),time||0,false,false)){v43PrevEnemy(e);return;}
+ if(e.elite){ctx.strokeStyle='#ffcb6c';ctx.lineWidth=2;ctx.beginPath();ctx.arc(e.x,e.y,e.r+8,0,Math.PI*2);ctx.stroke();}
+ ctx.fillStyle='#192333';ctx.fillRect(e.x-22,e.y-e.r-25,44,6);ctx.fillStyle='#71e5a0';ctx.fillRect(e.x-22,e.y-e.r-25,44*Math.max(0,e.hp)/Math.max(1,e.maxHp),6);
+};
+v38DrawBoss=function(b){
+ if(!v43Draw(ctx,'boss',b.type==='KING'||b.type==='BRUTE'?1:0,b,null,Math.max(112,b.r*2.5),Math.max(135,b.r*3.05),time||0,Math.sin(time*5)>.85,false))v43PrevBoss(b);
+ ctx.save();ctx.strokeStyle='rgba(255,114,150,.65)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(b.x,b.y,b.r+11,0,Math.PI*2);ctx.stroke();ctx.restore();
+};
+v38DrawAlly=function(a){
+ const index=Math.abs((a.name||'ALLY').split('').reduce((n,ch)=>n+ch.charCodeAt(0),0))%4;
+ if(!v43Draw(ctx,'hero',index,a,null,52,66,time||0,false,false))v43PrevAlly(a);
+ ctx.fillStyle='#c0ffde';ctx.textAlign='center';ctx.font='bold 12px Arial';ctx.fillText(a.name||'ALLY',a.x,a.y-42);ctx.textAlign='left';
+};
+
+document.getElementById('fullscreenBtn').addEventListener('click',()=>{const wrap=document.getElementById('wrap');if(document.fullscreenElement)document.exitFullscreen();else wrap.requestFullscreen?.();});document.getElementById('hdPixelBtn').addEventListener('click',e=>{hdPixelFx=!hdPixelFx;e.target.textContent=hdPixelFx?'🧱 PIXEL FX ON':'🧱 PIXEL FX OFF';});
+document.getElementById('beginButton').addEventListener('click',showTitleScreen);showTitleScreen();if(location.hash==='#soundtracks')showSoundtrackPlayer();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
